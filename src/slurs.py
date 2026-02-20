@@ -30,25 +30,33 @@ def generate_slur():
 
 def generate_other_targets(slur, targets):
     target_filter = slur[1]
-    command = f"""SELECT DISTINCT target FROM slurs WHERE target <> '{target_filter}' ORDER BY RANDOM() LIMIT 4;"""
+    command = f"""SELECT DISTINCT target FROM slurs WHERE target NOT LIKE '%{target_filter}%' AND '{target_filter}' NOT LIKE '%' || target || '%' ORDER BY RANDOM() LIMIT 4;"""
     return connect(command, multiple_lines=True)
 
 
 def assemble_question(slur, other_targets):
-    targets = [slur[1], *other_targets]
+    slur_word, correct_target, origin = slur
+
+    targets = [correct_target, *other_targets]
     random.shuffle(targets)
-    print(f"Which ethnic group does {slur[0]} target?\nHint: it's {slur[1]}")
-    for index, target in enumerate(targets):
-        print(f"{index + 1}. {target}")
-    answer = input("Enter a number: ")
-    if answer.isdigit():
-        answer = int(answer)
-        answer -= 1
-        print("Targets:", targets[int(answer)])
-        print("Index of correct answer:", targets.index(slur[1]))
-        if targets[int(answer)] == targets[targets.index(slur[1])]:
-            print(f"\nCorrect! {slur[0]} refers to {slur[1]}\n\nOrigins:\n{slur[2]}")
-        else:
-            print(f"\nIncorrect! {slur[0]} refers to {slur[1]}\n")
+
+    print(f"Which ethnic group does {slur_word} target?\nHint: it's {correct_target}")
+
+    for index, target in enumerate(targets, start=1):
+        print(f"{index}. {target}")
+
+    while True:
+        try:
+            answer_idx = int(input("Enter a number: ")) - 1
+            if 0 <= answer_idx < len(targets):
+                break
+            print("Please select a valid option from the list.")
+        except ValueError:
+            print("Please enter a valid number.")
+
+    if targets[answer_idx] == correct_target:
+        print(
+            f"\nCorrect! {slur_word} refers to {correct_target}\n\nOrigins:\n{origin}"
+        )
     else:
-        answer = input("Please enter a number: ")
+        print(f"\nIncorrect! {slur_word} refers to {correct_target}\n")
