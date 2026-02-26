@@ -16,15 +16,16 @@ targets.forEach(target => {
       .then(r => r.json())
       .then(data => {
         if (data.correct) {
-          e.target.className = "target p-4 border-2 rounded-xl text-center text-lg font-bold select-none bg-green-100 border-green-500 text-green-800";
+          // Keep it green when clicked
+          e.target.className = "target cursor-default p-4 rounded-[15px] bg-gradient-to-br from-[#2ecc71] to-[#27ae60] text-white font-bold shadow-[0_4px_10px_rgba(0,0,0,0.1)] text-[0.9rem] sm:text-[1.1rem]";
 
-          // Just update the text and show the existing dialog
           dialogText.innerText = data.message;
           nextBtn.classList.remove("hidden");
           dialog.showModal();
 
         } else {
-          e.target.className = "target p-4 border-2 rounded-xl text-center text-lg font-medium select-none bg-red-50 border-red-300 text-red-500 cursor-not-allowed";
+          // Apply the red error styling and the shake animation
+          e.target.className = "target cursor-not-allowed p-4 rounded-[15px] bg-red-500 text-white font-bold border-[3px] border-red-700 animate-shake shadow-[0_4px_10px_rgba(0,0,0,0.1)] text-[0.9rem] sm:text-[1.1rem]";
         }
       });
   });

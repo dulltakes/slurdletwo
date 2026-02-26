@@ -1,1 +1,101 @@
 @import "tailwindcss";
+
+@theme {
+  --font-nunito: "Nunito", sans-serif;
+  --font-chewy: "Chewy", cursive;
+}
+
+@layer utilities {
+  .bg-wild-gradient {
+    background: linear-gradient(135deg, #ff6b9d, #c44569, #f8b500, #ff6b9d);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  .bg-option-gradient {
+    background: linear-gradient(45deg, #ffe66d, #ff9ff3);
+  }
+
+  .bg-option-gradient-hover {
+    background: linear-gradient(45deg, #ff6b9d, #c44569);
+  }
+
+  .text-shadow-slurdle {
+    text-shadow: 3px 3px 0px #ffe66d,
+    6px 6px 0px rgba(255, 107, 157, 0.6),
+    9px 9px 0px rgba(196, 69, 105, 0.4);
+  }
+
+  .text-shadow-slurdle-mobile {
+    text-shadow: 2px 2px 0px #ffe66d,
+    4px 4px 0px rgba(255, 107, 157, 0.6),
+    6px 6px 0px rgba(196, 69, 105, 0.4);
+  }
+
+  .animate-slurdle-bounce {
+    animation: bounce 2s ease-in-out 2.5;
+  }
+}
+
+/* Keyframes */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  40% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+  60% {
+    transform: translateY(-5px) rotate(-3deg);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+  }
+  to {
+    box-shadow: 0 4px 25px rgba(255, 107, 157, 0.8);
+  }
+}
+
+/* Base scrollbar hiding */
+html, body {
+  overscroll-behavior: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+@layer utilities {
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
