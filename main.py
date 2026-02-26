@@ -34,8 +34,6 @@ def make_question():
 if __name__ == "__main__":
     if args.refresh:
         args.init = True
-
-    # THE FIX: Only run the database logic if we are in the main process
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         if args.init:
             if args.refresh:
@@ -45,20 +43,12 @@ if __name__ == "__main__":
             df = create_dataframe()
             create_db(df)
             logging.info("Database initialization fully complete.")
-
+    if args.slurs:
+        print(make_question())
+    if args.weights:
+        generate_similarity_weights()
     if args.run:
         logging.info("Starting the Flask server...")
         app.config["DATA"] = make_question()
         app.config["MAKE_QUESTION"] = make_question
         app.run(debug=True, port=5001)
-    if args.slurs:
-        targets = get_targets()
-        slur = generate_slur()
-        other_targets = generate_other_targets(slur)
-        question = assemble_question(slur, other_targets)
-        # ask_question(question)
-        # print(question)
-        # debug_targets()
-        # print(f"Target slur: {slur}\nOther slurs: {other_targets}")
-    if args.weights:
-        generate_similarity_weights()
