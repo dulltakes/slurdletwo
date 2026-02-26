@@ -5,19 +5,31 @@ import os
 from app import app
 from src.pull import clean_data_dir, create_dataframe, create_db, get_slurs
 from src.slurs import (
+    ask_question,
     assemble_question,
+    debug_targets,
     generate_other_targets,
     generate_slur,
     get_targets,
 )
+from src.weights import generate_similarity_weights
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--init", help="Initialise database", action="store_true")
 parser.add_argument("--refresh", help="Refresh database", action="store_true")
 parser.add_argument("--run", help="Run app", action="store_true")
 parser.add_argument("--slurs", help="Generate slurs", action="store_true")
+parser.add_argument("--weights", help="Generate weights", action="store_true")
+
 
 args = parser.parse_args()
+
+
+def make_question():
+    slur = generate_slur()
+    other_targets = generate_other_targets(slur)
+    return assemble_question(slur, other_targets)
+
 
 if __name__ == "__main__":
     if args.refresh:
@@ -36,10 +48,17 @@ if __name__ == "__main__":
 
     if args.run:
         logging.info("Starting the Flask server...")
+        app.config["DATA"] = make_question()
+        app.config["MAKE_QUESTION"] = make_question
         app.run(debug=True, port=5001)
     if args.slurs:
         targets = get_targets()
         slur = generate_slur()
-        other_targets = generate_other_targets(slur, targets)
-        assemble_question(slur, other_targets)
+        other_targets = generate_other_targets(slur)
+        question = assemble_question(slur, other_targets)
+        # ask_question(question)
+        # print(question)
+        # debug_targets()
         # print(f"Target slur: {slur}\nOther slurs: {other_targets}")
+    if args.weights:
+        generate_similarity_weights()

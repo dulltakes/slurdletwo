@@ -1,6 +1,8 @@
 import random
 import sqlite3
 
+import pandas as pd
+
 from src.config import DATA_DIR, SLURS_DB
 
 
@@ -28,9 +30,30 @@ def generate_slur():
     return connect(command, multiple_lines=False)
 
 
-def generate_other_targets(slur, targets):
-    target_filter = slur[1]
-    command = f"""SELECT DISTINCT target FROM slurs WHERE target NOT LIKE '%{target_filter}%' AND '{target_filter}' NOT LIKE '%' || target || '%' ORDER BY RANDOM() LIMIT 4;"""
+import re
+
+
+def generate_other_targets(slur):
+    cleaned_target = re.sub(r"s\b", "", slur[1], flags=re.IGNORECASE)
+    words = re.split(r"[\s/]+", cleaned_target)
+    conditions = []
+    for word in words:
+        if len(word) > 2:
+            conditions.append(
+                f"(target NOT LIKE '%{word}%' AND '{word}' NOT LIKE '%' || target || '%')"
+            )
+    if not conditions:
+        conditions.append(
+            f"(target NOT LIKE '%{cleaned_target}%' AND '{cleaned_target}' NOT LIKE '%' || target || '%')"
+        )
+    where_clause = " AND ".join(conditions)
+    command = f"""
+        SELECT DISTINCT target 
+        FROM slurs 
+        WHERE {where_clause} 
+        ORDER BY RANDOM() 
+        LIMIT 4;
+    """
     return connect(command, multiple_lines=True)
 
 
@@ -39,7 +62,16 @@ def assemble_question(slur, other_targets):
 
     targets = [correct_target, *other_targets]
     random.shuffle(targets)
+    return {
+        "slur": slur_word,
+        "correct_target": correct_target,
+        "targets": targets,
+        "origin": origin,
+    }
 
+
+def ask_question(question):
+    slur_word, correct_target, targets, origin = question.values()
     print(f"Which ethnic group does {slur_word} target?\nHint: it's {correct_target}")
 
     for index, target in enumerate(targets, start=1):
@@ -60,3 +92,22 @@ def assemble_question(slur, other_targets):
         )
     else:
         print(f"\nIncorrect! {slur_word} refers to {correct_target}\n")
+
+
+def debug_targets():
+    debug_list = []
+    regex = re.compile(r"\w+(?=s$)")
+    general_targets = get_targets()
+    replaced = []
+    for i in range(10000):
+        slur = generate_slur()
+        other_targets = generate_other_targets(slur)
+        debug_list.append([slur[0], slur[1], other_targets])
+    # for target in general_targets:
+    #     if re.match(regex, target):
+    #         replaced.append([target, re.match(regex, target).group()])
+    # print(replaced)
+    df = pd.DataFrame(debug_list, columns=["Slur", "Correct Target", "Targets"])
+    df.to_csv(DATA_DIR / "debug.csv", index=False)
+    # df2 = pd.DataFrame(get_targets(), columns=["target"])
+    # df2.to_csv(DATA_DIR / "targets.csv", index=False)

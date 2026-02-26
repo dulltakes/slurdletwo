@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css"/>
+    <script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
+    {#    {% assets "scss_all" %}#}
+    {#        <link rel="stylesheet" href="{{ ASSET_URL }}">#}
+    {#    {% endassets %}#}
+    <title>{% block title %}SLURDLE{% endblock %}</title>
+</head>
+
+<body>
+<main>{% block content %}{% endblock %}</main>
+{% block scripts %}{% endblock %}
+</body>
+
+</html>
