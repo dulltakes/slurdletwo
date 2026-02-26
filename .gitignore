@@ -387,4 +387,18 @@ pyrightconfig.json
 pyvenv.cfg
 pip-selfcheck.json
 
-# End of https://www.toptal.com/developers/gitignore/api/python,pycharm,flask,venv
+### yarn ###
+# https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
+
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+!.yarn/cache
+
+.pnp.*
+
+# End of https://www.toptal.com/developers/gitignore/api/python,pycharm,flask,venv,yarn
