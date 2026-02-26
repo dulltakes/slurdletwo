@@ -5,12 +5,9 @@ import os
 from app import app
 from src.pull import clean_data_dir, create_dataframe, create_db, get_slurs
 from src.slurs import (
-    ask_question,
     assemble_question,
-    debug_targets,
     generate_other_targets,
     generate_slur,
-    get_targets,
 )
 from src.weights import generate_similarity_weights
 
