@@ -1,0 +1,19 @@
+{% extends 'base.jinja' %}
+
+{% block title %}SLURDLE{% endblock %}
+
+{% block content %}
+    <p>Which ethnic group does <em>{{ data.slur }}</em> target?</p>
+    <p>Hint: it's {{ data.correct_target }}</p>
+    <p id="result"></p>
+    <ul>
+        {% for target in data.targets %}
+            <li class="target">{{ target }}</li>
+        {% endfor %}
+    </ul>
+    <button id="next-btn" style="display:none;">Next →</button>
+
+{% endblock %}
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='app.js') }}" defer></script>
+{% endblock %}

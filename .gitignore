@@ -2,8 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,flask,venv
 
 ### Slurdle ###
-data/*.csv
-data/*.html
+data/*
 
 ### Flask ###
 instance/*
