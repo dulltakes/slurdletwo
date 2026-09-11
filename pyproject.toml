@@ -2,21 +2,35 @@
 name = "slurdletwo"
 version = "0.1.0"
 description = "it's like wordle but for slurs also not rly that like wordle it's just a fun pun"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 dependencies = [
-  "beautifulsoup4>=4.14.3",
-  "flask>=3.1.3",
-  "flask-assets>=2.1.0",
-  "libsass>=0.23.0",
-  "lxml>=6.0.2",
-  "pandas>=2.3.3",
-  "pandas-stubs>=2.2.2.240807",
-  "requests>=2.32.5",
-  "ruff>=0.15.2",
-  "scikit-learn>=1.6.1",
-  "sentence-transformers>=5.1.2",
+  "beautifulsoup4",
+  "flask",
+  "flask-assets",
+  "libsass",
+  "lxml",
+  "pandas",
+  "pandas-stubs",
+  "requests",
+  "ruff",
+  "scikit-learn",
+  "sentence-transformers",
 ]
 
 [tool.ruff.lint]
 fixable = ["ALL"]
 unfixable = ["F401"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-flask>=1.3.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+testpaths = [
+  "tests"
+]
