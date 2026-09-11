@@ -402,3 +402,4 @@ pip-selfcheck.json
 .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,flask,venv,yarn
+.agents

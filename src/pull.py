@@ -1,7 +1,6 @@
 import logging
 import sqlite3
 from io import StringIO
-from pathlib import Path
 
 import pandas as pd
 import requests
@@ -13,6 +12,34 @@ from src.config import DATA_DIR, SLURS_DB
 # Keep the intermediate files local to this script
 SLURS_PATH = DATA_DIR / "slurs.html"
 SLURS_CSV = DATA_DIR / "slurs.csv"
+
+# Target corrections to combine similar targets and fix typos
+TARGET_CORRECTIONS = {
+    "Asian": "Asians",
+    "Australian": "Australians",
+    "Black Americans": "African Americans",
+    "Black": "Blacks",
+    "Columbian": "Colombians",
+    "Czech": "Czechs",
+    "German": "Germans",
+    "Gypsy": "Gypsies",
+    "Mexican": "Mexicans",
+    "Moroccan": "Moroccans",
+    "Native American": "Native Americans",
+    "Samoan": "Samoans",
+    "Scandanavians": "Scandinavians",
+    "Ukranians": "Ukrainians",
+    "Urkranians": "Ukrainians",
+    "Bengals": "Bengalis",
+    "Salvadoreans": "Salvadorans",
+    "Hatians": "Haitians",
+    "Montenegrians": "Montenegrins",
+    "Icelandics": "Icelanders",
+    "Croats": "Croatians",
+    "Jewish": "Jews",
+    "Spanish": "Spaniards",
+    "Turkish": "Turks",
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -59,6 +86,16 @@ def create_dataframe():
 
     df = df_list[0]
     df.columns = ["slur", "target", "origins"]
+
+    # Clean up trailing commas and accidental spaces (e.g., "Asians,")
+    df["target"] = df["target"].str.strip(", ")
+
+    # Apply corrections to combine similar targets
+    df["target"] = df["target"].replace(TARGET_CORRECTIONS)
+
+    # Remove the row(s) containing the "This Site" scraping artifact
+    df = df[df["target"] != "This Site"]
+
     df.to_csv(SLURS_CSV, index=False, encoding="utf-8")
     logging.info(f"CSV saved successfully to {SLURS_CSV}")
     return df
@@ -70,3 +107,11 @@ def create_db(df):
     conn = sqlite3.connect(SLURS_DB)
     df.to_sql("slurs", conn, index=False, if_exists="replace")
     conn.close()
+    logging.info(f"Data successfully exported to database: {SLURS_DB}")
+
+
+if __name__ == "__main__":
+    get_slurs()
+    df = create_dataframe()
+    create_db(df)
+

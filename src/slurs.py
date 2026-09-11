@@ -1,16 +1,27 @@
 import random
 import sqlite3
-
+import re
 import pandas as pd
 
 from src.config import DATA_DIR, SLURS_DB
 
+WEIGHTS_DF = None
 
-def connect(command, multiple_lines=False):
+def get_weights_df():
+    global WEIGHTS_DF
+    if WEIGHTS_DF is None:
+        weights_path = DATA_DIR / "target_weights_bge-large-en-v1.5.csv"
+        if weights_path.exists():
+            WEIGHTS_DF = pd.read_csv(weights_path, index_col=0)
+        else:
+            WEIGHTS_DF = pd.DataFrame()
+    return WEIGHTS_DF
+
+def connect(command, params=(), multiple_lines=False):
     try:
         conn = sqlite3.connect(SLURS_DB)
         cursor = conn.cursor()
-        cursor.execute(command)
+        cursor.execute(command, params)
         return (
             [i[0] for i in cursor.fetchall()] if multiple_lines else cursor.fetchone()
         )
@@ -19,33 +30,42 @@ def connect(command, multiple_lines=False):
     finally:
         conn.close()
 
-
 def get_targets():
     command = """SELECT DISTINCT target from slurs;"""
     return connect(command, multiple_lines=True)
-
 
 def generate_slur():
     command = """SELECT * from slurs ORDER BY RANDOM() LIMIT 1;"""
     return connect(command, multiple_lines=False)
 
-
-import re
-
-
 def generate_other_targets(slur):
-    cleaned_target = re.sub(r"s\b", "", slur[1], flags=re.IGNORECASE)
+    target = slur[1]
+    
+    # Try semantic selection first
+    df = get_weights_df()
+    if not df.empty and target in df.index:
+        # Get similarities for the target
+        similarities = df.loc[target]
+        # Filter: similarity > 0.3 (somewhat related) and < 0.8 (not too identical)
+        valid_targets = similarities[(similarities > 0.3) & (similarities < 0.8)].index.tolist()
+        
+        if len(valid_targets) >= 4:
+            return random.sample(valid_targets, 4)
+            
+    # Fallback to original SQL regex/string filtering if semantic selection fails
+    cleaned_target = re.sub(r"s\b", "", target, flags=re.IGNORECASE)
     words = re.split(r"[\s/]+", cleaned_target)
     conditions = []
+    params = []
     for word in words:
         if len(word) > 2:
-            conditions.append(
-                f"(target NOT LIKE '%{word}%' AND '{word}' NOT LIKE '%' || target || '%')"
-            )
+            conditions.append("(target NOT LIKE ? AND ? NOT LIKE '%' || target || '%')")
+            params.extend([f"%{word}%", word])
+    
     if not conditions:
-        conditions.append(
-            f"(target NOT LIKE '%{cleaned_target}%' AND '{cleaned_target}' NOT LIKE '%' || target || '%')"
-        )
+        conditions.append("(target NOT LIKE ? AND ? NOT LIKE '%' || target || '%')")
+        params.extend([f"%{cleaned_target}%", cleaned_target])
+        
     where_clause = " AND ".join(conditions)
     command = f"""
         SELECT DISTINCT target 
@@ -54,8 +74,7 @@ def generate_other_targets(slur):
         ORDER BY RANDOM() 
         LIMIT 4;
     """
-    return connect(command, multiple_lines=True)
-
+    return connect(command, params=tuple(params), multiple_lines=True)
 
 def assemble_question(slur, other_targets):
     slur_word, correct_target, origin = slur
@@ -68,7 +87,6 @@ def assemble_question(slur, other_targets):
         "targets": targets,
         "origin": origin,
     }
-
 
 def ask_question(question):
     slur_word, correct_target, targets, origin = question.values()
@@ -93,7 +111,6 @@ def ask_question(question):
     else:
         print(f"\nIncorrect! {slur_word} refers to {correct_target}\n")
 
-
 def debug_targets():
     debug_list = []
     regex = re.compile(r"\w+(?=s$)")
@@ -103,11 +120,5 @@ def debug_targets():
         slur = generate_slur()
         other_targets = generate_other_targets(slur)
         debug_list.append([slur[0], slur[1], other_targets])
-    # for target in general_targets:
-    #     if re.match(regex, target):
-    #         replaced.append([target, re.match(regex, target).group()])
-    # print(replaced)
     df = pd.DataFrame(debug_list, columns=["Slur", "Correct Target", "Targets"])
     df.to_csv(DATA_DIR / "debug.csv", index=False)
-    # df2 = pd.DataFrame(get_targets(), columns=["target"])
-    # df2.to_csv(DATA_DIR / "targets.csv", index=False)

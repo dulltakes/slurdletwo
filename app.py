@@ -1,9 +1,10 @@
+import os
 from flask import Flask, jsonify, render_template, request, session
 
 from src.slurs import assemble_question, generate_other_targets, generate_slur
 
 app = Flask(__name__)
-app.secret_key = "your-secret-key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
 
 
 def make_question():
