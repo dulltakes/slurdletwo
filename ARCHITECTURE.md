@@ -14,7 +14,7 @@
 
 ### 2. Core Game Logic & ML (`src/slurs.py`, `src/weights.py`)
 - **Target Selection**: When generating a question, the game needs 1 correct answer and 4 incorrect choices.
-- **Semantic Matching**: Uses pre-computed similarity weights (via `sentence-transformers`, loaded from `data/target_weights_bge-large-en-v1.5.csv`) to find multiple-choice options that are semantically similar (but not too identical) to the correct target.
+- **Semantic Matching (Hybrid Approach)**: Instead of directly embedding short, ambiguous labels (e.g., "Welsh/Scottish"), the architecture uses Gemini (`gemini-2.5-pro`) to enrich each target with a rich, paragraph-length demographic description. These descriptions are then embedded using a local SentenceTransformer model (`BAAI/bge-large-en-v1.5`), and multiple-choice distractors are selected based on the cosine similarity of these enriched embeddings. This drastically improves the nuance and accuracy of the similarity matrices.
 - **Fallback Logic**: If semantic matching fails, it falls back to string exclusion SQL queries to pick random targets that don't share substrings with the correct target.
 
 ### 3. Web Backend (`app.py`, `main.py`)

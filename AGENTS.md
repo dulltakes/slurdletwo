@@ -12,7 +12,7 @@ This is a Flask web application with a TailwindCSS frontend.
 2. **Code Discoverability**: Write code that is easy to search for in plain text (meaningful, unique identifiers, descriptive error messages).
 
 ## Skill Usage Contexts
-Based on the installed skills in `.agent/skills`, use the following skills in these contexts:
+Based on the installed skills in `.agents/skills`, use the following skills in these contexts:
 
 - **`uv-package-manager`**: Use for any Python dependency management (adding, removing, or syncing packages).
 - **`python-pro`**: Use for general backend Python development in `app.py`, `main.py`, `src/`, and `tests/`. Apply modern Python features, type hinting, and performance optimizations.
@@ -21,3 +21,4 @@ Based on the installed skills in `.agent/skills`, use the following skills in th
 - **`write-discoverable-code`**: Apply continuously when creating new functions, classes, variables, and error messages to ensure they are easily searchable.
 - **`docs-architect`**: Use proactively when documenting the system architecture, adding robust READMEs, or explaining the ML pipeline.
 - **`python-development-python-scaffold`**: Use when scaffolding new major features, structuring new directories, or setting up new integrations.
+- **`train-sentence-transformers`**: Use to solve issues relating to using Gemini to enrich target labels and subsequently running sentence transformers to embed those enriched results.
