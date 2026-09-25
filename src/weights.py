@@ -8,11 +8,7 @@ from src.config import DATA_DIR, SLURS_DB
 
 MODELS = {
     "paraphrase-multilingual-mpnet-base-v2": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
-    "bge-large-en-v1.5": "BAAI/bge-large-en-v1.5",
 }
-
-# BGE models perform better with this task-specific prefix
-BGE_PREFIX = "Represent the ethnic/demographic group: "
 
 
 def generate_similarity_weights():
@@ -29,12 +25,7 @@ def generate_similarity_weights():
         print(f"\nLoading {short_name}...")
         model = SentenceTransformer(model_id)
 
-        # Apply prefix only for BGE models
-        if "bge" in short_name:
-            texts_to_encode = [BGE_PREFIX + t for t in targets]
-            print(f"  Encoding with prefix: '{BGE_PREFIX}'")
-        else:
-            texts_to_encode = targets
+        texts_to_encode = targets
 
         print(f"  Generating embeddings for {len(targets)} targets...")
         embeddings = model.encode(texts_to_encode, show_progress_bar=True)
@@ -68,170 +59,20 @@ def generate_similarity_weights():
     return results
 
 
-def generate_gemini_weights():
-    import os
-    import json
-    from google import genai
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        print("Error: GEMINI_API_KEY is not set.")
-        return
-
-    print("\nGenerating weights via Gemini 3.1 Pro...")
-    conn = sqlite3.connect(SLURS_DB)
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT target FROM slurs ORDER BY target ASC;")
-    targets = [row[0] for row in cursor.fetchall()]
-    conn.close()
-
-    client = genai.Client()
-    
-    prompt = f"""You are an expert sociologist and game designer for a trivia application. 
-Below is a list of ethnic, national, and demographic groups. 
-For each group in the list, identify 5 to 10 other groups from the exact same list that are the most semantically related (e.g., sharing geographic proximity, cultural history, or commonly grouped together). 
-These will be used as plausible incorrect distractors in a multiple-choice question.
-
-Your output must be valid JSON where keys are the target groups and values are lists of related groups.
-Only output groups that are in the provided list.
-
-TARGETS:
-{json.dumps(targets)}
-"""
-
-    print("Calling Gemini API...")
-    response = client.models.generate_content(
-        model='gemini-2.5-pro',
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "temperature": 0.2
-        }
-    )
-    
-    related_map = json.loads(response.text)
-    
-    missing_targets = [t for t in targets if t not in related_map]
-    if missing_targets:
-        print(f"\nWarning: Gemini failed to process {len(missing_targets)} targets:")
-        for mt in missing_targets:
-            print(f"  - {mt}")
-    else:
-        print("\nSuccess: Gemini provided mappings for all targets.")
-        
-    df_weights = pd.DataFrame(0.0, index=targets, columns=targets)
-    
-    for target, related in related_map.items():
-        if target in df_weights.index:
-            df_weights.at[target, target] = 1.0 # self similarity
-            for r in related:
-                if r in df_weights.columns:
-                    df_weights.at[target, r] = 0.5
-                    
-    output_path = DATA_DIR / "target_weights_gemini-2.5-pro.csv"
-    df_weights.to_csv(output_path)
-    print(f"Saved to {output_path}")
-
-    print("\nTop 25 closest target pairs (excluding self-similarity):")
-    pairs = []
-    for target in df_weights.index:
-        for col in df_weights.columns:
-            if target != col:
-                val = df_weights.at[target, col]
-                if val > 0.0:
-                    pairs.append((val, target, col))
-                    
-    # Sort by weight descending (though mostly they will be 0.5)
-    pairs.sort(reverse=True, key=lambda x: x[0])
-    
-    for val, t1, t2 in pairs[:25]:
-        print(f"  {t1} <-> {t2}: {val}")
-
-
-def generate_combined_weights():
-    import os
-    import json
-    import sqlite3
+def qa_weights(custom_path=None):
     import pandas as pd
-    from google import genai
-    from sentence_transformers import SentenceTransformer
-    from sklearn.metrics.pairwise import cosine_similarity
-    from src.config import DATA_DIR, SLURS_DB
-
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        print("Error: GEMINI_API_KEY is not set.")
+    from pathlib import Path
+    from src.config import DATA_DIR
+    
+    weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+    if not weights_path.exists():
+        print(f"Error: {weights_path} not found. Run --weights-combined first or provide a valid path.")
         return
-
-    print("\nGenerating combined weights...")
-    conn = sqlite3.connect(SLURS_DB)
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT target FROM slurs ORDER BY target ASC;")
-    targets = [row[0] for row in cursor.fetchall()]
-    conn.close()
-
-    desc_path = DATA_DIR / "target_descriptions.json"
-    
-    if desc_path.exists():
-        print(f"Loading cached descriptions from {desc_path}...")
-        with open(desc_path, "r") as f:
-            descriptions_map = json.load(f)
-    else:
-        print("Calling Gemini 2.5 Pro to generate descriptions...")
-        client = genai.Client()
         
-        # Process in batches to avoid output token limits
-        descriptions_map = {}
-        batch_size = 70
-        for i in range(0, len(targets), batch_size):
-            batch_targets = targets[i:i+batch_size]
-            print(f"  Processing batch {i//batch_size + 1}/{(len(targets)+batch_size-1)//batch_size}...")
-            
-            prompt = f"""You are an expert sociologist and demographer.
-Below is a list of demographic, national, and ethnic groups.
-For each group, provide a neutral, factual, 1-2 sentence description focusing on their geographic origin, history, and cultural roots.
-
-Your output must be valid JSON where keys are the exact target group names from the list and values are their descriptions.
-
-TARGETS:
-{json.dumps(batch_targets)}
-"""
-            response = client.models.generate_content(
-                model='gemini-2.5-pro',
-                contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "temperature": 0.2
-                }
-            )
-            descriptions_map.update(json.loads(response.text))
-            
-        with open(desc_path, "w") as f:
-            json.dump(descriptions_map, f, indent=2)
-        print(f"Saved descriptions to {desc_path}")
-
-    missing_targets = [t for t in targets if t not in descriptions_map]
-    if missing_targets:
-        print(f"\nWarning: Gemini failed to generate descriptions for {len(missing_targets)} targets.")
-        for mt in missing_targets:
-            print(f"  - {mt}")
-        
-    print("\nEmbedding descriptions using BAAI/bge-large-en-v1.5...")
-    model = SentenceTransformer("BAAI/bge-large-en-v1.5")
+    df_weights = pd.read_csv(weights_path, index_col=0)
+    targets = df_weights.index.tolist()
     
-    # Use empty string fallback for any missing targets
-    texts_to_encode = [descriptions_map.get(t, "") for t in targets]
-    
-    embeddings = model.encode(texts_to_encode, show_progress_bar=True)
-    print("Calculating cosine similarity...")
-    similarity_matrix = cosine_similarity(embeddings)
-    
-    df_weights = pd.DataFrame(similarity_matrix, index=targets, columns=targets)
-    output_path = DATA_DIR / "target_weights_combined.csv"
-    df_weights.to_csv(output_path)
-    print(f"Saved to {output_path}")
-
-    print("\nTop 25 closest target pairs (excluding self-similarity):")
     pairs = []
     for i in range(len(targets)):
         for j in range(i + 1, len(targets)):
@@ -239,8 +80,134 @@ TARGETS:
             pairs.append((val, targets[i], targets[j]))
             
     pairs.sort(reverse=True, key=lambda x: x[0])
+    
+    print(f"\n--- TOP 25 MATCHES FOR {weights_path.name} ---")
     for val, t1, t2 in pairs[:25]:
         print(f"  {t1} <-> {t2}: {val:.4f}")
+        
+    mid_idx = len(pairs) // 2
+    print("\n--- MIDDLE 10 MATCHES ---")
+    for val, t1, t2 in pairs[mid_idx - 5: mid_idx + 5]:
+        print(f"  {t1} <-> {t2}: {val:.4f}")
+        
+    print("\n--- BOTTOM 10 MATCHES ---")
+    for val, t1, t2 in pairs[-10:]:
+        print(f"  {t1} <-> {t2}: {val:.4f}")
+
+def qa_weights_llm(custom_path=None):
+    import os
+    import json
+    import random
+    import pandas as pd
+    from pathlib import Path
+    from google import genai
+    from src.config import DATA_DIR
+    
+    weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+    if not weights_path.exists():
+        print(f"Error: {weights_path} not found.")
+        return
+        
+    df_weights = pd.read_csv(weights_path, index_col=0)
+    targets = df_weights.index.tolist()
+    
+    valid_pairs = []
+    for i in range(len(targets)):
+        for j in range(i + 1, len(targets)):
+            val = df_weights.iloc[i, j]
+            if 0.3 < val < 0.8:
+                valid_pairs.append((targets[i], targets[j], val))
+                
+    if len(valid_pairs) > 100:
+        sampled_pairs = random.sample(valid_pairs, 100)
+    else:
+        sampled_pairs = valid_pairs
+        
+    if not sampled_pairs:
+        print("No pairs found within the 0.3 - 0.8 range.")
+        return
+        
+    print(f"Evaluating {len(sampled_pairs)} pairs with Gemini LLM-as-a-Judge...")
+    client = genai.Client()
+    
+    prompt_pairs = [f"{t1} <-> {t2}" for t1, t2, _ in sampled_pairs]
+    prompt = f"""You are an expert trivia designer. Given the following pairs of demographic groups, evaluate if they are plausible distractors for each other (i.e. related enough to be tricky, but distinct enough to not be ambiguous). 
+Output a JSON object where the keys are the exact pair strings provided, and the values are boolean true/false.
+
+PAIRS:
+{json.dumps(prompt_pairs)}
+"""
+    response = client.models.generate_content(
+        model='gemini-2.5-pro',
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json",
+            "temperature": 0.1
+        }
+    )
+    
+    results = json.loads(response.text)
+    valid_count = sum(1 for v in results.values() if v is True)
+    total = len(results)
+    
+    print(f"\nLLM QA Results:")
+    print(f"  Valid Distractors: {valid_count} / {total} ({(valid_count/total)*100:.1f}%)")
+    
+    invalid_pairs = [k for k, v in results.items() if v is False]
+    if invalid_pairs:
+        print("\nExamples flagged as INVALID by Gemini:")
+        for ip in invalid_pairs[:10]:
+            print(f"  - {ip}")
+
+def qa_weights_reranker(custom_path=None):
+    import random
+    import pandas as pd
+    import numpy as np
+    from pathlib import Path
+    from src.config import DATA_DIR
+    from sentence_transformers.cross_encoder import CrossEncoder
+    
+    weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+    if not weights_path.exists():
+        print(f"Error: {weights_path} not found.")
+        return
+        
+    df_weights = pd.read_csv(weights_path, index_col=0)
+    targets = df_weights.index.tolist()
+    
+    pairs = []
+    scores = []
+    for i in range(len(targets)):
+        for j in range(i + 1, len(targets)):
+            pairs.append((targets[i], targets[j]))
+            scores.append(df_weights.iloc[i, j])
+            
+    if len(pairs) > 500:
+        indices = random.sample(range(len(pairs)), 500)
+        sampled_pairs = [pairs[i] for i in indices]
+        sampled_scores = [scores[i] for i in indices]
+    else:
+        sampled_pairs = pairs
+        sampled_scores = scores
+        
+    print(f"Loading CrossEncoder (cross-encoder/stsb-roberta-large) for {len(sampled_pairs)} pairs...")
+    model = CrossEncoder('cross-encoder/stsb-roberta-large')
+    
+    print("Scoring with CrossEncoder...")
+    cross_scores = model.predict(sampled_pairs, show_progress_bar=True)
+    
+    correlation = np.corrcoef(sampled_scores, cross_scores)[0, 1]
+    
+    print(f"\nCrossEncoder QA Results:")
+    print(f"  Pearson Correlation with original weights: {correlation:.4f}")
+    if correlation > 0.8:
+        print("  Status: EXCELLENT (Highly robust matrix)")
+    elif correlation > 0.6:
+        print("  Status: GOOD (Acceptable matrix)")
+    else:
+        print("  Status: POOR (Matrix does not align with deep semantic similarity)")
+    
+
 
 if __name__ == "__main__":
     generate_similarity_weights()
