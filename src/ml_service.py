@@ -7,9 +7,13 @@ class TargetSimilarityService:
         self.weights_df = pd.DataFrame()
         
     def load(self):
-        weights_path = DATA_DIR / "target_weights_bge-large-en-v1.5.csv"
-        if weights_path.exists():
-            self.weights_df = pd.read_csv(weights_path, index_col=0)
+        weights_path_combined = DATA_DIR / "target_weights_combined.csv"
+        weights_path_legacy = DATA_DIR / "target_weights_bge-large-en-v1.5.csv"
+        
+        if weights_path_combined.exists():
+            self.weights_df = pd.read_csv(weights_path_combined, index_col=0)
+        elif weights_path_legacy.exists():
+            self.weights_df = pd.read_csv(weights_path_legacy, index_col=0)
             
     def get_similar_targets(self, target, count=4):
         if self.weights_df.empty or target not in self.weights_df.index:
