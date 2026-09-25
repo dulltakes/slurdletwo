@@ -148,5 +148,99 @@ TARGETS:
         print(f"  {t1} <-> {t2}: {val}")
 
 
+def generate_combined_weights():
+    import os
+    import json
+    import sqlite3
+    import pandas as pd
+    from google import genai
+    from sentence_transformers import SentenceTransformer
+    from sklearn.metrics.pairwise import cosine_similarity
+    from src.config import DATA_DIR, SLURS_DB
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("Error: GEMINI_API_KEY is not set.")
+        return
+
+    print("\nGenerating combined weights...")
+    conn = sqlite3.connect(SLURS_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT target FROM slurs ORDER BY target ASC;")
+    targets = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    desc_path = DATA_DIR / "target_descriptions.json"
+    
+    if desc_path.exists():
+        print(f"Loading cached descriptions from {desc_path}...")
+        with open(desc_path, "r") as f:
+            descriptions_map = json.load(f)
+    else:
+        print("Calling Gemini 2.5 Pro to generate descriptions...")
+        client = genai.Client()
+        
+        # Process in batches to avoid output token limits
+        descriptions_map = {}
+        batch_size = 70
+        for i in range(0, len(targets), batch_size):
+            batch_targets = targets[i:i+batch_size]
+            print(f"  Processing batch {i//batch_size + 1}/{(len(targets)+batch_size-1)//batch_size}...")
+            
+            prompt = f"""You are an expert sociologist and demographer.
+Below is a list of demographic, national, and ethnic groups.
+For each group, provide a neutral, factual, 1-2 sentence description focusing on their geographic origin, history, and cultural roots.
+
+Your output must be valid JSON where keys are the exact target group names from the list and values are their descriptions.
+
+TARGETS:
+{json.dumps(batch_targets)}
+"""
+            response = client.models.generate_content(
+                model='gemini-2.5-pro',
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "temperature": 0.2
+                }
+            )
+            descriptions_map.update(json.loads(response.text))
+            
+        with open(desc_path, "w") as f:
+            json.dump(descriptions_map, f, indent=2)
+        print(f"Saved descriptions to {desc_path}")
+
+    missing_targets = [t for t in targets if t not in descriptions_map]
+    if missing_targets:
+        print(f"\nWarning: Gemini failed to generate descriptions for {len(missing_targets)} targets.")
+        for mt in missing_targets:
+            print(f"  - {mt}")
+        
+    print("\nEmbedding descriptions using BAAI/bge-large-en-v1.5...")
+    model = SentenceTransformer("BAAI/bge-large-en-v1.5")
+    
+    # Use empty string fallback for any missing targets
+    texts_to_encode = [descriptions_map.get(t, "") for t in targets]
+    
+    embeddings = model.encode(texts_to_encode, show_progress_bar=True)
+    print("Calculating cosine similarity...")
+    similarity_matrix = cosine_similarity(embeddings)
+    
+    df_weights = pd.DataFrame(similarity_matrix, index=targets, columns=targets)
+    output_path = DATA_DIR / "target_weights_combined.csv"
+    df_weights.to_csv(output_path)
+    print(f"Saved to {output_path}")
+
+    print("\nTop 25 closest target pairs (excluding self-similarity):")
+    pairs = []
+    for i in range(len(targets)):
+        for j in range(i + 1, len(targets)):
+            val = df_weights.iloc[i, j]
+            pairs.append((val, targets[i], targets[j]))
+            
+    pairs.sort(reverse=True, key=lambda x: x[0])
+    for val, t1, t2 in pairs[:25]:
+        print(f"  {t1} <-> {t2}: {val:.4f}")
+
 if __name__ == "__main__":
     generate_similarity_weights()
