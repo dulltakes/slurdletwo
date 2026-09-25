@@ -1,21 +1,31 @@
 import pytest
-from src.slurs import generate_slur, generate_other_targets, assemble_question
+from app import app
+from src.repository import get_random_slur_record
+from src.slurs import get_other_targets, assemble_question
 
-def test_generate_slur():
-    slur = generate_slur()
-    assert slur is not None
-    assert len(slur) == 3 # slur, target, origin
+def test_get_random_slur_record():
+    with app.app_context():
+        slur_record = get_random_slur_record()
+        assert slur_record is not None
+        assert slur_record.slur is not None
+        assert slur_record.target is not None
 
-def test_generate_other_targets():
-    slur = generate_slur()
-    targets = generate_other_targets(slur)
-    assert len(targets) == 4
-    assert slur[1] not in targets
+def test_get_other_targets():
+    with app.app_context():
+        slur_record = get_random_slur_record()
+        targets = get_other_targets(slur_record)
+        assert len(targets) == 4
+        assert slur_record.target not in targets
 
 def test_assemble_question():
-    slur = ("test_slur", "test_target", "test_origin")
+    class DummySlur:
+        slur = "test_slur"
+        target = "test_target"
+        origins = "test_origin"
+    
+    slur_record = DummySlur()
     other_targets = ["target1", "target2", "target3", "target4"]
-    question = assemble_question(slur, other_targets)
+    question = assemble_question(slur_record, other_targets)
     
     assert question["slur"] == "test_slur"
     assert question["correct_target"] == "test_target"
