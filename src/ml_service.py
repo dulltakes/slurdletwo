@@ -1,6 +1,9 @@
-import pandas as pd
 import random
-from src.config import DATA_DIR, MIN_SEMANTIC_SIMILARITY, MAX_SEMANTIC_SIMILARITY
+
+import pandas as pd
+
+from src.config import DATA_DIR, MAX_SEMANTIC_SIMILARITY, MIN_SEMANTIC_SIMILARITY
+
 
 class TargetSimilarityService:
     def __init__(self):
