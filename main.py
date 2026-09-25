@@ -12,6 +12,7 @@ parser.add_argument("--refresh", help="Refresh database", action="store_true")
 parser.add_argument("--run", help="Run app", action="store_true")
 parser.add_argument("--weights", help="Generate weights", action="store_true")
 parser.add_argument("--ai-weights", help="Generate weights using Gemini API", action="store_true")
+parser.add_argument("--weights-combined", help="Generate weights using Gemini enriched labels + local SentenceTransformer", action="store_true")
 
 args = parser.parse_args()
 
@@ -34,6 +35,10 @@ if __name__ == "__main__":
     if args.ai_weights:
         from src.weights import generate_gemini_weights
         generate_gemini_weights()
+
+    if args.weights_combined:
+        from src.weights import generate_combined_weights
+        generate_combined_weights()
 
     if args.run:
         logging.info("Starting the Flask server...")
