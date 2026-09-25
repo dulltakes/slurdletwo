@@ -1,12 +1,10 @@
 import random
-import re
 
 import pandas as pd
 
 from src.config import DATA_DIR
 from src.ml_service import ml_service
 from src.repository import (
-    get_all_unique_targets,
     get_random_slur_record,
     get_targets_excluding_substrings,
 )

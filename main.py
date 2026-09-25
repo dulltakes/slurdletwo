@@ -12,8 +12,6 @@ parser.add_argument("--refresh", help="Refresh database", action="store_true")
 parser.add_argument("--run", help="Run app", action="store_true")
 parser.add_argument("--weights", help="Generate weights", action="store_true")
 parser.add_argument("--qa-weights", nargs='?', const="", help="QA the generated combined weights (optionally provide a CSV path)")
-parser.add_argument("--qa-llm", nargs='?', const="", help="Automated QA using Gemini LLM-as-a-Judge")
-parser.add_argument("--qa-reranker", nargs='?', const="", help="Automated QA using CrossEncoder reranker")
 
 args = parser.parse_args()
 
@@ -37,16 +35,6 @@ if __name__ == "__main__":
         path = None if args.qa_weights == "" else args.qa_weights
         from src.weights import qa_weights
         qa_weights(path)
-
-    if args.qa_llm is not None:
-        path = None if args.qa_llm == "" else args.qa_llm
-        from src.weights import qa_weights_llm
-        qa_weights_llm(path)
-
-    if args.qa_reranker is not None:
-        path = None if args.qa_reranker == "" else args.qa_reranker
-        from src.weights import qa_weights_reranker
-        qa_weights_reranker(path)
 
     if args.run:
         logging.info("Starting the Flask server...")
