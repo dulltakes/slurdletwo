@@ -403,3 +403,9 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,flask,venv,yarn
 .agents
+
+# Tailwind output
+static/css/style.css
+
+# Node modules
+node_modules/
