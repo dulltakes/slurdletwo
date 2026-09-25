@@ -70,7 +70,7 @@ def get_slurs():
     logging.info("Download complete. Parsing HTML...")
     soup = BeautifulSoup(res.text, "html.parser")
 
-    table_div = soup.find(attrs={"id": "slurs"})
+    table_div = soup.find(id="slurs")
     if table_div:
         table = table_div.find("table")
         SLURS_PATH.write_text(str(table), encoding="utf-8")

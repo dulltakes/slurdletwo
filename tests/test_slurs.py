@@ -1,7 +1,8 @@
 import pytest
 from app import app
 from src.repository import get_random_slur_record
-from src.slurs import get_other_targets, assemble_question
+from src.slurs import assemble_question, get_other_targets
+
 
 def test_get_random_slur_record():
     with app.app_context():
@@ -13,6 +14,9 @@ def test_get_random_slur_record():
 def test_get_other_targets():
     with app.app_context():
         slur_record = get_random_slur_record()
+        if slur_record is None:
+            pytest.skip("No slurs in DB")
+            
         targets = get_other_targets(slur_record)
         assert len(targets) == 4
         assert slur_record.target not in targets

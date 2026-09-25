@@ -1,11 +1,12 @@
 import os
+
 from flask import Flask, jsonify, render_template, request, session
 
-from src.models import db
-from src.ml_service import ml_service
-from src.slurs import assemble_question, get_other_targets
-from src.repository import get_random_slur_record
 from src.config import SQLALCHEMY_DATABASE_URI
+from src.ml_service import ml_service
+from src.models import db
+from src.repository import get_random_slur_record
+from src.slurs import assemble_question, get_other_targets
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
