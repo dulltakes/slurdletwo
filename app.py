@@ -1,16 +1,27 @@
 import os
 from flask import Flask, jsonify, render_template, request, session
 
-from src.slurs import assemble_question, generate_other_targets, generate_slur
+from src.models import db
+from src.ml_service import ml_service
+from src.slurs import assemble_question, get_other_targets
+from src.repository import get_random_slur_record
+from src.config import SQLALCHEMY_DATABASE_URI
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
+with app.app_context():
+    ml_service.load()
 
 
 def make_question():
-    slur = generate_slur()
-    other_targets = generate_other_targets(slur)
-    return assemble_question(slur, other_targets)
+    slur_record = get_random_slur_record()
+    other_targets = get_other_targets(slur_record)
+    return assemble_question(slur_record, other_targets)
 
 
 @app.route("/")
