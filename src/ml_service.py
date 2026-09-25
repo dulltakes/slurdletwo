@@ -7,10 +7,13 @@ class TargetSimilarityService:
         self.weights_df = pd.DataFrame()
         
     def load(self):
+        weights_path_mpnet = DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
         weights_path_combined = DATA_DIR / "target_weights_combined.csv"
         weights_path_legacy = DATA_DIR / "target_weights_bge-large-en-v1.5.csv"
         
-        if weights_path_combined.exists():
+        if weights_path_mpnet.exists():
+            self.weights_df = pd.read_csv(weights_path_mpnet, index_col=0)
+        elif weights_path_combined.exists():
             self.weights_df = pd.read_csv(weights_path_combined, index_col=0)
         elif weights_path_legacy.exists():
             self.weights_df = pd.read_csv(weights_path_legacy, index_col=0)
