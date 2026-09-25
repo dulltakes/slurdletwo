@@ -1,10 +1,16 @@
 import random
 import re
+
 import pandas as pd
 
 from src.config import DATA_DIR
-from src.repository import get_random_slur_record, get_all_unique_targets, get_targets_excluding_substrings
 from src.ml_service import ml_service
+from src.repository import (
+    get_all_unique_targets,
+    get_random_slur_record,
+    get_targets_excluding_substrings,
+)
+
 
 def get_other_targets(slur_record):
     target = slur_record.target
@@ -54,11 +60,10 @@ def ask_question(question):
 
 def debug_targets():
     debug_list = []
-    regex = re.compile(r"\w+(?=s$)")
-    general_targets = get_all_unique_targets()
-    replaced = []
     for i in range(10000):
         slur_record = get_random_slur_record()
+        if not slur_record:
+            continue
         other_targets = get_other_targets(slur_record)
         debug_list.append([slur_record.slur, slur_record.target, other_targets])
     df = pd.DataFrame(debug_list, columns=["Slur", "Correct Target", "Targets"])

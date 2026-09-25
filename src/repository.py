@@ -1,7 +1,10 @@
-from src.models import db, Slur
-from sqlalchemy.sql.expression import func
-from sqlalchemy import text
 import re
+
+from sqlalchemy import text
+from sqlalchemy.sql.expression import func
+
+from src.models import Slur, db
+
 
 def get_random_slur_record():
     return Slur.query.order_by(func.random()).first()
@@ -15,7 +18,8 @@ def get_targets_excluding_substrings(target, limit=4):
     words = re.split(r"[\s/]+", cleaned_target)
     
     conditions = []
-    params = {}
+    import typing
+    params: dict[str, typing.Any] = {}
     for i, word in enumerate(words):
         if len(word) > 2:
             conditions.append(f"(target NOT LIKE :word_like_{i} AND :word_exact_{i} NOT LIKE '%' || target || '%')")

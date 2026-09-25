@@ -30,7 +30,7 @@ def generate_similarity_weights():
         print(f"  Generating embeddings for {len(targets)} targets...")
         embeddings = model.encode(texts_to_encode, show_progress_bar=True)
 
-        print(f"  Calculating cosine similarity...")
+        print("  Calculating cosine similarity...")
         similarity_matrix = cosine_similarity(embeddings)
 
         df_weights = pd.DataFrame(similarity_matrix, index=targets, columns=targets)
@@ -40,11 +40,11 @@ def generate_similarity_weights():
         print(f"  Saved to {output_path}")
 
         print(f"\n  Top 25 closest target pairs for {short_name} (excluding self-similarity):")
-        pairs = []
+        pairs: list[tuple[float, str, str]] = []
         for i in range(len(targets)):
             for j in range(i + 1, len(targets)):
                 val = df_weights.iloc[i, j]
-                pairs.append((val, targets[i], targets[j]))
+                pairs.append((float(val), targets[i], targets[j]))  # type: ignore
         
         pairs.sort(reverse=True, key=lambda x: x[0])
         for val, t1, t2 in pairs[:25]:
@@ -61,8 +61,10 @@ def generate_similarity_weights():
 
 
 def qa_weights(custom_path=None):
-    import pandas as pd
     from pathlib import Path
+
+    import pandas as pd
+
     from src.config import DATA_DIR
     
     weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
@@ -73,11 +75,11 @@ def qa_weights(custom_path=None):
     df_weights = pd.read_csv(weights_path, index_col=0)
     targets = df_weights.index.tolist()
     
-    pairs = []
+    pairs: list[tuple[float, str, str]] = []
     for i in range(len(targets)):
         for j in range(i + 1, len(targets)):
             val = df_weights.iloc[i, j]
-            pairs.append((val, targets[i], targets[j]))
+            pairs.append((float(val), targets[i], targets[j]))  # type: ignore
             
     pairs.sort(reverse=True, key=lambda x: x[0])
     
@@ -95,12 +97,13 @@ def qa_weights(custom_path=None):
         print(f"  {t1} <-> {t2}: {val:.4f}")
 
 def qa_weights_llm(custom_path=None):
-    import os
     import json
     import random
-    import pandas as pd
     from pathlib import Path
+
+    import pandas as pd
     from google import genai
+
     from src.config import DATA_DIR
     
     weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
@@ -115,7 +118,7 @@ def qa_weights_llm(custom_path=None):
     for i in range(len(targets)):
         for j in range(i + 1, len(targets)):
             val = df_weights.iloc[i, j]
-            if 0.3 < val < 0.8:
+            if 0.3 < float(val) < 0.8:  # type: ignore
                 valid_pairs.append((targets[i], targets[j], val))
                 
     if len(valid_pairs) > 100:
@@ -146,11 +149,15 @@ PAIRS:
         }
     )
     
+    if not response.text:
+        print("Error: Gemini returned an empty response.")
+        return
+        
     results = json.loads(response.text)
     valid_count = sum(1 for v in results.values() if v is True)
     total = len(results)
     
-    print(f"\nLLM QA Results:")
+    print("\nLLM QA Results:")
     print(f"  Valid Distractors: {valid_count} / {total} ({(valid_count/total)*100:.1f}%)")
     
     invalid_pairs = [k for k, v in results.items() if v is False]
@@ -161,11 +168,13 @@ PAIRS:
 
 def qa_weights_reranker(custom_path=None):
     import random
-    import pandas as pd
-    import numpy as np
     from pathlib import Path
-    from src.config import DATA_DIR
+
+    import numpy as np
+    import pandas as pd
     from sentence_transformers.cross_encoder import CrossEncoder
+
+    from src.config import DATA_DIR
     
     weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
     if not weights_path.exists():
@@ -196,9 +205,9 @@ def qa_weights_reranker(custom_path=None):
     print("Scoring with CrossEncoder...")
     cross_scores = model.predict(sampled_pairs, show_progress_bar=True)
     
-    correlation = np.corrcoef(sampled_scores, cross_scores)[0, 1]
+    correlation = np.corrcoef(np.array(sampled_scores, dtype=float), cross_scores)[0, 1]
     
-    print(f"\nCrossEncoder QA Results:")
+    print("\nCrossEncoder QA Results:")
     print(f"  Pearson Correlation with original weights: {correlation:.4f}")
     if correlation > 0.8:
         print("  Status: EXCELLENT (Highly robust matrix)")
