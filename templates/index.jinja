@@ -21,7 +21,7 @@
 
     {#    <p class="text-sm font-bold text-gray-500 mt-2">Hint: it's {{ data.correct_target }}</p>#}
   </div>
-  <ul class="space-y-4 m-0 p-0 list-none">
+  <ul id="targets-list" class="space-y-4 m-0 p-0 list-none">
     {% for target in data.targets %}
       <li
         class="target cursor-pointer flex items-center p-4 rounded-none bg-white border-4 border-black text-black font-bold uppercase shadow-brutal transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active text-[1rem] sm:text-[1.2rem]">
