@@ -22,11 +22,11 @@
   <title>{% block title %}SLURDLE{% endblock %}</title>
   <meta name="description" content="it's like wordle but for slurs. kind of. the name's funny">
   <meta name="theme-color" content="#f4f4f0">
-  <link rel="canonical" href="{{ request.url if request else '' }}">
+  <link rel="canonical" href="https://dulltakes.golf{{ request.path if request else '' }}">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ request.url if request else '' }}">
+  <meta property="og:url" content="https://dulltakes.golf{{ request.path if request else '' }}">
   <meta property="og:title" content="SLURDLE">
   <meta property="og:description" content="it's like wordle but for slurs. kind of. the name's funny">
   <meta property="og:site_name" content="SLURDLE">
@@ -36,7 +36,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@dulltakes">
   <meta name="twitter:creator" content="@dulltakes">
-  <meta name="twitter:url" content="{{ request.url if request else '' }}">
+  <meta name="twitter:url" content="https://dulltakes.golf{{ request.path if request else '' }}">
   <meta name="twitter:title" content="SLURDLE">
   <meta name="twitter:description" content="it's like wordle but for slurs. kind of. the name's funny">
   <meta name="twitter:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
@@ -47,7 +47,7 @@
     "@context": "https://schema.org",
     "@type": "VideoGame",
     "name": "SLURDLE",
-    "url": "{{ request.url if request else '' }}",
+    "url": "https://dulltakes.golf{{ request.path if request else '' }}",
     "description": "it's like wordle but for slurs. kind of. the name's funny",
     "genre": "Word Game",
     "playMode": "SinglePlayer",
