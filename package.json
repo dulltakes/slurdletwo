@@ -2,11 +2,13 @@
   "name": "slurdletwo",
   "packageManager": "yarn@4.12.0",
   "scripts": {
-    "build": "tailwindcss -i ./static/src/input.css -o ./static/css/style.css --minify",
-    "watch": "tailwindcss -i ./static/src/input.css -o ./static/css/style.css --watch"
+    "build": "tailwindcss -i ./static/src/input.css -o ./static/css/style.css --minify && esbuild ./static/src/app.ts --bundle --minify --outfile=./static/app.js",
+    "watch": "tailwindcss -i ./static/src/input.css -o ./static/css/style.css --watch & esbuild ./static/src/app.ts --bundle --watch --outfile=./static/app.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.1",
-    "tailwindcss": "^4.2.1"
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^7.0.2"
   }
 }
