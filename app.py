@@ -36,6 +36,17 @@ def slurdle():
     return render_template("index.jinja", data=data)
 
 
+@app.route("/next", methods=["GET"])
+def next_question():
+    data = make_question()
+
+    session["correct_target"] = data["correct_target"]
+    session["slur"] = data["slur"]
+    session["origin"] = data["origin"]
+
+    return jsonify(data)
+
+
 @app.route("/guess", methods=["POST"])
 def guess():
     body = request.get_json()
