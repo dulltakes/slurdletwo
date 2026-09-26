@@ -1,4 +1,5 @@
 import re
+import random
 
 from sqlalchemy import text
 from sqlalchemy.sql.expression import func
@@ -7,7 +8,12 @@ from src.models import Slur, db
 
 
 def get_random_slur_record():
-    return Slur.query.order_by(func.random()).first()
+    while True:
+        record = Slur.query.order_by(func.random()).first()
+        # Reject "Blacks" roughly 20% of the time it comes up
+        if record and record.target == "Blacks" and random.random() < 0.20:
+            continue
+        return record
 
 def get_all_unique_targets():
     results = Slur.query.with_entities(Slur.target).distinct().all()
