@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Nunito:wght@400;600;700&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;600;700&display=swap"
         rel="stylesheet">
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -16,9 +16,9 @@
 </head>
 
 <body
-  class="bg-wild-gradient text-[#2c3e50] font-nunito antialiased min-h-screen flex flex-col justify-center items-center p-4">
+  class="bg-[#f4f4f0] text-black font-space antialiased min-h-screen flex flex-col justify-center items-center p-4 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0iI2Y0ZjRmMCIvPgo8Y2lyY2xlIGN4PSIyIiBjeT0iMiIgcj0iMSIgZmlsbD0iI2QxZDFkMSIvPgo8L3N2Zz4=')]">
 <main
-  class="w-full max-w-lg p-6 sm:p-8 bg-white/95 w-full rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.2)] backdrop-blur-md border-[3px] border-[#ffe66d] rotate-1 hover:rotate-0 hover:scale-[1.02] transition-transform duration-300">
+  class="w-full max-w-lg p-6 sm:p-8 bg-white w-full rounded-none shadow-brutal border-4 border-black transition-transform duration-200">
   {% block content %}{% endblock %}
 </main>
 

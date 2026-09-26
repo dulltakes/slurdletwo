@@ -17,7 +17,7 @@ targets.forEach(target => {
       .then(data => {
         if (data.correct) {
           // Keep it green when clicked
-          e.target.className = "target cursor-default p-4 rounded-[15px] bg-gradient-to-br from-[#2ecc71] to-[#27ae60] text-white font-bold shadow-[0_4px_10px_rgba(0,0,0,0.1)] text-[0.9rem] sm:text-[1.1rem]";
+          e.target.className = "target cursor-default p-4 rounded-none bg-brutal-green border-4 border-black text-black font-bold shadow-brutal text-[1rem] sm:text-[1.2rem] uppercase";
 
           dialogText.innerText = data.message;
           nextBtn.classList.remove("hidden");
@@ -25,7 +25,7 @@ targets.forEach(target => {
 
         } else {
           // Apply the red error styling and the shake animation
-          e.target.className = "target cursor-not-allowed p-4 rounded-[15px] bg-red-500 text-white font-bold border-[3px] border-red-700 animate-shake shadow-[0_4px_10px_rgba(0,0,0,0.1)] text-[0.9rem] sm:text-[1.1rem]";
+          e.target.className = "target cursor-not-allowed p-4 rounded-none bg-red-500 border-4 border-black text-white font-bold animate-shake shadow-brutal text-[1rem] sm:text-[1.2rem] uppercase";
         }
       });
   });

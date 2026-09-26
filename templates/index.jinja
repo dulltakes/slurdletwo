@@ -5,38 +5,38 @@
 {% block content %}
   <div class="text-center mb-8">
     <h1
-      class="font-chewy text-7xl sm:text-9xl text-[#2c3e50] tracking-[3px] -rotate-2 animate-slurdle-bounce text-shadow-slurdle-mobile sm:text-shadow-slurdle m-0 mb-4">
+      class="font-archivo text-6xl sm:text-7xl text-white tracking-[2px] uppercase text-shadow-brutal mb-4 -rotate-1 border-black inline-block bg-brutal-pink px-4 py-2 border-4 shadow-brutal-sm">
       SLURDLE
     </h1>
 
     <div
-      class="font-extrabold bg-gradient-to-tr from-[#ffe66d] to-[#ff6b9d]  text-white text-shadow-sm text-center text-[clamp(1rem,2.5vw,1.3rem)]  p-3 rounded-xl inline-block shadow-md mb-2">
-      <span class="block mb-1">Which ethnic group does</span>
+      class="font-bold bg-white text-black text-[clamp(1rem,2.5vw,1.3rem)] p-4 border-4 border-black shadow-brutal-sm mb-2 uppercase">
+      <span class="block mb-2">Which ethnic group does</span>
       <span
-        class="inline-block bg-gradient-to-tr from-[#ffe66d] to-[#ff6b9d] px-3 py-1 rounded-full text-[#2c3e50] shadow-[0_4px_15px_rgba(255,107,157,0.4)] transform scale-110 animate-[glow_2s_ease-in-out_infinite_alternate]">
+        class="inline-block bg-brutal-yellow px-4 py-1 border-4 border-black font-archivo">
         {{ data.slur }}
       </span>
-      <span class="block mt-1">target?</span>
+      <span class="block mt-2">target?</span>
     </div>
 
     {#    <p class="text-sm font-bold text-gray-500 mt-2">Hint: it's {{ data.correct_target }}</p>#}
   </div>
-  <ul class="space-y-3 m-0 p-0  list-none">
+  <ul class="space-y-4 m-0 p-0 list-none">
     {% for target in data.targets %}
       <li
-        class="target cursor-pointer flex items-center p-4 rounded-[15px] bg-option-gradient text-[#2c3e50] font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.1)] transition-all duration-300 hover:bg-option-gradient-hover hover:text-white hover:translate-x-[10px] hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.2)] text-[0.9rem] sm:text-[1.1rem]">
+        class="target cursor-pointer flex items-center p-4 rounded-none bg-white border-4 border-black text-black font-bold uppercase shadow-brutal transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active text-[1rem] sm:text-[1.2rem]">
         {{ target }}
       </li>
     {% endfor %}
   </ul>
   <dialog id="result-dialog"
-          class="p-8 rounded-[20px] shadow-[0_10px_30px_rgba(46,204,113,0.4)] border-[3px] border-[#ffe66d] bg-gradient-to-br from-[#2ecc71] to-[#27ae60] text-white backdrop:bg-black/70 backdrop:backdrop-blur-sm max-w-sm w-[90%] sm:w-full m-auto text-center open:animate-[celebration_0.6s_ease-out]">
+          class="p-8 rounded-none shadow-brutal border-4 border-black bg-brutal-green text-black backdrop:bg-black/50 max-w-sm w-[90%] sm:w-full m-auto text-center">
 
-    <h2 class="text-[#ffe66d] text-2xl sm:text-3xl font-bold mb-4 drop-shadow-md mt-0">Correct!</h2>
-    <p id="dialog-text" class="text-sm sm:text-lg font-medium mb-6 leading-relaxed drop-shadow-sm"></p>
+    <h2 class="text-white text-shadow-brutal text-3xl sm:text-4xl font-archivo uppercase mb-4 mt-0 border-black block tracking-widest">Correct!</h2>
+    <p id="dialog-text" class="text-sm sm:text-lg font-bold mb-6 uppercase leading-relaxed"></p>
 
     <button id="next-btn"
-            class="hidden w-full bg-gradient-to-tr from-[#ffe66d] to-[#f39c12] text-[#2c3e50] font-bold py-3 px-6 rounded-[25px] mt-4 uppercase tracking-[1px] shadow-[0_6px_20px_rgba(243,156,18,0.4)] hover:from-[#f39c12] hover:to-[#e67e22] hover:-translate-y-1 hover:scale-105 hover:shadow-[0_10px_30px_rgba(243,156,18,0.6)] active:translate-y-0 active:shadow-[0_4px_15px_rgba(243,156,18,0.4)] transition-all duration-300">
+            class="hidden w-full bg-brutal-yellow border-4 border-black text-black font-bold py-3 px-6 rounded-none mt-4 uppercase tracking-[2px] shadow-brutal hover:bg-white hover:shadow-brutal-hover active:shadow-brutal-active transition-all duration-150">
       Next Question →
     </button>
   </dialog>
