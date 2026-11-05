@@ -188,6 +188,6 @@ uv run ruff check --fix .   # auto-fix safe issues
 
 ---
 
-## architecture
+## Architecture
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for a full breakdown of the component design, data flow, and refactoring notes.
