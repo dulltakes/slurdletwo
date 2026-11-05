@@ -13,6 +13,7 @@ dependencies = [
   "flask-assets",
   "flask-sqlalchemy>=3.1.1",
   "google-genai>=2.25.0",
+  "gunicorn>=26.2.0",
   "libsass",
   "lxml",
   "pandas",
