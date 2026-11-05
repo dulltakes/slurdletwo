@@ -23,6 +23,8 @@ class Config:
     SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or os.urandom(24)
     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     TESTING = False
     DEBUG = False
 
@@ -44,6 +46,9 @@ class ProductionConfig(Config):
     """Production configuration."""
 
     DEBUG = False
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
 
 
 def get_config() -> type[Config]:

@@ -62,7 +62,7 @@ function handleTargetClick(e: MouseEvent) {
 
   fetch("/guess", {
     method: "POST",
-    body: JSON.stringify({ target: clickedTarget }),
+    body: JSON.stringify({ target: clickedTarget, slur: currentSlur }),
     headers: { "Content-Type": "application/json; charset=UTF-8" }
   })
     .then(r => r.json() as Promise<GuessResponse>)

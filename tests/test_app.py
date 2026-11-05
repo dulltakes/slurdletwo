@@ -100,3 +100,25 @@ class TestGuessRouteEdgeCases:
         """An empty JSON body should not cause a 500."""
         resp = client.post("/guess", json={})
         assert resp.status_code == 200
+
+    def test_recent_question_fallback_when_active_round_rotated(self, client):
+        """If a background probe or refresh advanced correct_target to round 2,
+        a guess submitted for round 1's slur must still be recognized."""
+        with client.session_transaction() as sess:
+            # Active session was rotated to question 2
+            sess["correct_target"] = "Bulgarians"
+            sess["slur"] = "Burglar"
+            sess["origin"] = "origin 2"
+            sess["recent_questions"] = {
+                "Hoosier": {"target": "Whites", "origin": "origin 1"},
+                "Burglar": {"target": "Bulgarians", "origin": "origin 2"},
+            }
+
+        # User is still answering "Hoosier" with "Whites"
+        resp = client.post(
+            "/guess", json={"target": "Whites", "slur": "Hoosier"}
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["correct"] is True
+        assert "Hoosier refers to Whites" in data["message"]
