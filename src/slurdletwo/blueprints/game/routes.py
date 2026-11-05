@@ -2,7 +2,11 @@
 
 from flask import Blueprint, jsonify, render_template, request, session
 
-from slurdletwo.game import assemble_question, get_other_targets
+from slurdletwo.game import (
+    assemble_question,
+    format_typographic_quotes,
+    get_other_targets,
+)
 from slurdletwo.repository import get_random_slur_record
 
 game_bp = Blueprint("game", __name__)
@@ -45,10 +49,13 @@ def guess():
     correct = session.get("correct_target")
 
     if user_guess == correct:
+        raw_message = (
+            f"{session.get('slur')} refers to {correct}. {session.get('origin')}"
+        )
         return jsonify(
             {
                 "correct": True,
-                "message": f"{session.get('slur')} refers to {correct}. {session.get('origin')}",
+                "message": format_typographic_quotes(raw_message),
             }
         )
     else:

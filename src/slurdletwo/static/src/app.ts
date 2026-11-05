@@ -39,6 +39,13 @@ function fireLevelStart() {
 
 fireLevelStart();
 
+function toSmartQuotes(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/(^|[\s(\[{<—\-])"(\S)/g, "$1“$2")
+    .replace(/"/g, "”");
+}
+
 function attachTargetListeners() {
   const targets = document.querySelectorAll<HTMLElement>(".target");
   targets.forEach((target) => {
@@ -73,7 +80,7 @@ function handleTargetClick(e: MouseEvent) {
         // Keep it green when clicked
         targetEl.className = "target cursor-default p-4 rounded-none bg-brutal-green border-4 border-black text-black font-bold shadow-brutal text-[1rem] sm:text-[1.2rem] uppercase";
 
-        if (dialogText) dialogText.innerText = data.message || "";
+        if (dialogText) dialogText.innerText = toSmartQuotes(data.message || "");
         if (nextBtn) nextBtn.classList.remove("hidden");
         if (dialog) dialog.showModal();
 

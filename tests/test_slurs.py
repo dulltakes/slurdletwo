@@ -8,7 +8,11 @@ Covers:
 
 import pytest
 
-from slurdletwo.game import assemble_question, get_other_targets
+from slurdletwo.game import (
+    assemble_question,
+    format_typographic_quotes,
+    get_other_targets,
+)
 from slurdletwo.repository import get_random_slur_record
 
 
@@ -111,3 +115,31 @@ class TestGetOtherTargets:
             pytest.skip("No slurs in DB")
         targets = get_other_targets(record)
         assert len(targets) == len(set(targets))
+
+
+class TestFormatTypographicQuotes:
+    """Tests for ``format_typographic_quotes``."""
+
+    def test_formats_paired_quotes_around_word(self):
+        text = 'From the Spanish word for "mixed".'
+        expected = "From the Spanish word for “mixed”."
+        assert format_typographic_quotes(text) == expected
+
+    def test_formats_quotes_at_start_of_string(self):
+        text = '"Mestizo" is an ethnic term.'
+        expected = "“Mestizo” is an ethnic term."
+        assert format_typographic_quotes(text) == expected
+
+    def test_formats_multiple_quoted_terms(self):
+        text = 'Refers to "first" and "second" groups.'
+        expected = "Refers to “first” and “second” groups."
+        assert format_typographic_quotes(text) == expected
+
+    def test_handles_empty_or_none_input(self):
+        assert format_typographic_quotes("") == ""
+        assert format_typographic_quotes(None) == ""
+
+    def test_assemble_question_applies_typographic_quotes(self, slur_stub_factory):
+        stub = slur_stub_factory(origins='From the Spanish word for "mixed".')
+        result = assemble_question(stub, ["A", "B", "C", "D"])
+        assert result["origin"] == "From the Spanish word for “mixed”."

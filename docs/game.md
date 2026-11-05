@@ -71,6 +71,7 @@ sequenceDiagram
 
 | Symbol | Signature & Return Type | Detailed Behavior & Side Effects |
 | :----- | :---------------------- | :------------------------------- |
+| `format_typographic_quotes` | `(text: str \| None) -> str` | Converts straight ASCII double quotes into proper opening (`“`) and closing (`”`) typographical quotes for Space Grotesk rendering. |
 | `get_other_targets` | `(slur_record: Slur) -> list[str]` | Resolves 4 distractor targets, prioritizing ML semantic corridor over SQL lexical fallback. |
 | `assemble_question` | `(slur_record: Slur, other_targets: list[str]) -> dict` | Blends correct target and distractors into a shuffled 5-option question dictionary. |
 | `make_question` | `() -> dict` | Helper fetching a random record, resolving distractors, and returning an assembled question. |

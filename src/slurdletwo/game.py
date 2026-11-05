@@ -1,4 +1,5 @@
 import random
+import re
 
 import pandas as pd
 
@@ -8,6 +9,21 @@ from slurdletwo.repository import (
     get_random_slur_record,
     get_targets_excluding_substrings,
 )
+
+
+def format_typographic_quotes(text: str | None) -> str:
+    """Convert straight ASCII double quotes into typographical curly quotes.
+
+    Space Grotesk renders straight double quotes (U+0022) with a rightward slant
+    identical to closing quotes. Transforming quotes into proper opening ('“' / U+201C)
+    and closing ('”' / U+201D) pairs ensures correct directional presentation.
+    """
+    if not text:
+        return ""
+    # Opening quote: at start of string or preceded by whitespace/delimiters
+    formatted = re.sub(r'(^|[\s(\[{<—\-])"(\S)', r"\1“\2", text)
+    # Closing quote: any remaining double quotes
+    return re.sub(r'"', "”", formatted)
 
 
 def get_other_targets(slur_record):
@@ -31,7 +47,7 @@ def assemble_question(slur_record, other_targets):
         "slur": slur_record.slur,
         "correct_target": correct_target,
         "targets": targets,
-        "origin": slur_record.origins,
+        "origin": format_typographic_quotes(slur_record.origins),
     }
 
 
