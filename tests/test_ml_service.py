@@ -89,3 +89,36 @@ class TestTargetSimilarityServiceLoaded:
             for t in result:
                 sim = self.service.weights_df.loc[target, t]
                 assert MIN_SEMANTIC_SIMILARITY < sim < MAX_SEMANTIC_SIMILARITY
+
+
+class TestTargetSimilarityServicePriority:
+    """Tests for the weight CSV resolution priority."""
+
+    def test_jev_weights_take_priority_over_mpnet(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("src.ml_service.DATA_DIR", tmp_path)
+
+        jev_file = tmp_path / "target_weights_typesafe-jev.csv"
+        mpnet_file = (
+            tmp_path / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+        )
+
+        jev_file.write_text("target,A,B\nA,1.0,0.5\nB,0.5,1.0\n", encoding="utf-8")
+        mpnet_file.write_text("target,X,Y\nX,1.0,0.2\nY,0.2,1.0\n", encoding="utf-8")
+
+        service = TargetSimilarityService()
+        service.load()
+
+        assert list(service.weights_df.index) == ["A", "B"]
+
+    def test_mpnet_fallback_when_jev_absent(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("src.ml_service.DATA_DIR", tmp_path)
+
+        mpnet_file = (
+            tmp_path / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+        )
+        mpnet_file.write_text("target,X,Y\nX,1.0,0.2\nY,0.2,1.0\n", encoding="utf-8")
+
+        service = TargetSimilarityService()
+        service.load()
+
+        assert list(service.weights_df.index) == ["X", "Y"]

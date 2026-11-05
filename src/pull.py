@@ -114,4 +114,3 @@ if __name__ == "__main__":
     get_slurs()
     df = create_dataframe()
     create_db(df)
-

@@ -12,14 +12,15 @@ from src.repository import (
 
 def get_other_targets(slur_record):
     target = slur_record.target
-    
+
     # Try semantic selection first
     similar_targets = ml_service.get_similar_targets(target, count=4)
     if similar_targets:
         return similar_targets
-            
+
     # Fallback to SQL regex/string filtering if semantic selection fails
     return get_targets_excluding_substrings(target, limit=4)
+
 
 def assemble_question(slur_record, other_targets):
     correct_target = slur_record.target
@@ -32,6 +33,7 @@ def assemble_question(slur_record, other_targets):
         "targets": targets,
         "origin": slur_record.origins,
     }
+
 
 def ask_question(question):
     slur_word, correct_target, targets, origin = question.values()
@@ -55,6 +57,7 @@ def ask_question(question):
         )
     else:
         print(f"\nIncorrect! {slur_word} refers to {correct_target}\n")
+
 
 def debug_targets():
     debug_list = []

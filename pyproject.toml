@@ -19,6 +19,7 @@ dependencies = [
   "ruff",
   "scikit-learn",
   "sentence-transformers",
+  "typesafe-sdk>=0.7.5",
 ]
 
 [dependency-groups]
@@ -36,6 +37,7 @@ fixable = ["ALL"]
 unfixable = ["F401"]
 
 [tool.pyright]
+extraPaths = ["."]
 executionEnvironments = [
   { root = "." }
 ]

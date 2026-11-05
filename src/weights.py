@@ -39,13 +39,15 @@ def generate_similarity_weights():
         df_weights.to_csv(output_path)
         print(f"  Saved to {output_path}")
 
-        print(f"\n  Top 25 closest target pairs for {short_name} (excluding self-similarity):")
+        print(
+            f"\n  Top 25 closest target pairs for {short_name} (excluding self-similarity):"
+        )
         pairs: list[tuple[float, str, str]] = []
         for i in range(len(targets)):
             for j in range(i + 1, len(targets)):
                 val = df_weights.iloc[i, j]
                 pairs.append((float(val), targets[i], targets[j]))  # type: ignore
-        
+
         pairs.sort(reverse=True, key=lambda x: x[0])
         for val, t1, t2 in pairs[:25]:
             print(f"    {t1} <-> {t2}: {val:.4f}")
@@ -59,39 +61,44 @@ def generate_similarity_weights():
     return results
 
 
-
 def qa_weights(custom_path=None):
     from pathlib import Path
 
     import pandas as pd
 
     from src.config import DATA_DIR
-    
-    weights_path = Path(custom_path) if custom_path else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+
+    weights_path = (
+        Path(custom_path)
+        if custom_path
+        else DATA_DIR / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"
+    )
     if not weights_path.exists():
-        print(f"Error: {weights_path} not found. Run --weights-combined first or provide a valid path.")
+        print(
+            f"Error: {weights_path} not found. Run --weights-combined first or provide a valid path."
+        )
         return
-        
+
     df_weights = pd.read_csv(weights_path, index_col=0)
     targets = df_weights.index.tolist()
-    
+
     pairs: list[tuple[float, str, str]] = []
     for i in range(len(targets)):
         for j in range(i + 1, len(targets)):
             val = df_weights.iloc[i, j]
             pairs.append((float(val), targets[i], targets[j]))  # type: ignore
-            
+
     pairs.sort(reverse=True, key=lambda x: x[0])
-    
+
     print(f"\n--- TOP 25 MATCHES FOR {weights_path.name} ---")
     for val, t1, t2 in pairs[:25]:
         print(f"  {t1} <-> {t2}: {val:.4f}")
-        
+
     mid_idx = len(pairs) // 2
     print("\n--- MIDDLE 10 MATCHES ---")
-    for val, t1, t2 in pairs[mid_idx - 5: mid_idx + 5]:
+    for val, t1, t2 in pairs[mid_idx - 5 : mid_idx + 5]:
         print(f"  {t1} <-> {t2}: {val:.4f}")
-        
+
     print("\n--- BOTTOM 10 MATCHES ---")
     for val, t1, t2 in pairs[-10:]:
         print(f"  {t1} <-> {t2}: {val:.4f}")

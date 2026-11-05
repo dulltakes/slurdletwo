@@ -56,6 +56,8 @@ def slur_stub() -> SlurRecordStub:
 @pytest.fixture
 def slur_stub_factory():
     """Factory fixture – call with keyword overrides to get a custom stub."""
+
     def _make(**kwargs) -> SlurRecordStub:
         return SlurRecordStub(**kwargs)
+
     return _make
