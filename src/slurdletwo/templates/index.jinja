@@ -3,9 +3,9 @@
 {% block title %}SLURDLE{% endblock %}
 
 {% block content %}
-  <div class="text-center mb-8">
+  <div class="text-center mb-6 sm:mb-8">
     <h1
-      class="font-archivo text-6xl sm:text-7xl text-white tracking-[2px] uppercase text-shadow-brutal mb-4 -rotate-1 border-black inline-block bg-brutal-pink px-4 py-2 border-4 shadow-brutal-sm">
+      class="font-archivo text-[clamp(2.75rem,0.5rem+10vw,4.5rem)] text-white tracking-[2px] uppercase text-shadow-brutal mb-6 -rotate-1 border-black inline-block bg-brutal-pink px-4 py-2 border-4 shadow-brutal-sm">
       SLURDLE
     </h1>
 
@@ -21,10 +21,10 @@
 
     {#    <p class="text-sm font-bold text-gray-500 mt-2">Hint: it's {{ data.correct_target }}</p>#}
   </div>
-  <ul id="targets-list" class="space-y-4 m-0 p-0 list-none">
+  <ul id="targets-list" class="space-y-3 sm:space-y-4 m-0 p-0 list-none">
     {% for target in data.targets %}
       <li
-        class="target cursor-pointer flex items-center p-4 rounded-none bg-white border-4 border-black text-black font-bold uppercase shadow-brutal transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active text-[1rem] sm:text-[1.2rem]">
+        class="target cursor-pointer flex items-center py-3 px-4 sm:p-4 rounded-none bg-white border-4 border-black text-black font-bold uppercase shadow-brutal transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active text-[1rem] sm:text-[1.2rem]">
         {{ target }}
       </li>
     {% endfor %}
