@@ -34,35 +34,44 @@ a flask app that creates an endless trivia quiz on slurs. you guess which ethnic
 
 ```
 slurdletwo/
-├── app.py                  # Flask app factory, routes, session handling
-├── main.py                 # CLI entry point (--init, --jev-weights, --weights, --run, etc.)
 ├── src/
-│   ├── config.py           # Centralised paths and constants
-│   ├── models.py           # SQLAlchemy Slur model
-│   ├── repository.py       # Data access layer (queries)
-│   ├── slurs.py            # Game logic: assemble_question, get_other_targets
-│   ├── ml_service.py       # TargetSimilarityService singleton
-│   ├── jev_weights.py      # TypeSafe Jev System One probability weight generation
-│   ├── weights.py          # MPNet embedding + similarity matrix generation
-│   └── pull.py             # Scraper and ETL pipeline
-├── templates/
-│   ├── base.jinja          # Base layout
-│   └── index.jinja         # Game UI
-├── static/
-│   ├── app.js              # Client-side guess handling
-│   ├── src/input.css       # TailwindCSS source
-│   └── css/style.css       # Compiled CSS (generated)
-├── tests/                  # pytest test suite
-│   ├── conftest.py         # Shared fixtures and SlurRecordStub factory
-│   ├── test_app.py         # Flask route tests
-│   ├── test_jev_weights.py # Jev weights pipeline tests
-│   ├── test_slurs.py       # Game logic tests
-│   ├── test_repository.py  # Data access layer tests
-│   ├── test_ml_service.py  # ML service tests
-│   └── test_config.py      # Configuration invariant tests
-├── data/                   # SQLite DB and generated weight CSVs (gitignored)
-├── pyproject.toml          # Python project config (uv, ruff, pyrefly, pytest)
-└── package.json            # Node scripts (TailwindCSS build/watch)
+│   └── slurdletwo/             # Modern PEP 517/621 uv package layout
+│       ├── __init__.py         # Application factory (create_app)
+│       ├── cli.py              # CLI dispatcher (registered as `slurdle`)
+│       ├── config.py           # Centralised paths, configs, and thresholds
+│       ├── extensions.py       # Decoupled extensions (SQLAlchemy db)
+│       ├── models.py           # SQLAlchemy Slur model
+│       ├── repository.py       # Data access layer (queries & class damping)
+│       ├── pull.py             # Scraper and ETL pipeline
+│       ├── game.py             # Game logic: assemble_question, get_other_targets
+│       ├── ml/                 # Similarity & weight generation submodules
+│       │   ├── __init__.py     # Exports ml_service singleton
+│       │   ├── service.py      # Runtime TargetSimilarityService
+│       │   ├── jev.py          # TypeSafe Jev System One probability generation
+│       │   └── mpnet.py        # Offline MPNet embedding generation
+│       ├── blueprints/         # Modular route blueprints
+│       │   └── game/
+│       │       ├── __init__.py # Blueprint definition
+│       │       └── routes.py   # /, /next, /guess endpoints
+│       ├── static/             # Static assets bundled within the package
+│       │   ├── src/            # TailwindCSS input.css & TypeScript app.ts
+│       │   ├── css/style.css   # Compiled CSS
+│       │   └── app.js          # Compiled client JS bundle
+│       └── templates/          # Jinja2 templates bundled within the package
+│           ├── base.jinja      # Base layout
+│           └── index.jinja     # Game UI
+├── tests/                      # pytest test suite
+│   ├── conftest.py             # App factory fixtures & test client
+│   ├── test_factory.py         # Application factory tests
+│   ├── test_app.py             # Route & HTTP behaviour tests
+│   ├── test_jev_weights.py     # Jev weights pipeline tests
+│   ├── test_slurs.py           # Game logic tests
+│   ├── test_repository.py      # Data access layer tests
+│   ├── test_ml_service.py      # ML service tests
+│   └── test_config.py          # Configuration invariant tests
+├── data/                       # SQLite DB and generated weight CSVs (gitignored)
+├── pyproject.toml              # Python project config (uv, hatchling, ruff, pyrefly)
+└── package.json                # Node scripts (TailwindCSS build/watch)
 ```
 
 ---
@@ -77,7 +86,7 @@ slurdletwo/
 
 ### 1. Install dependencies
 
-`uv sync` should set it up. There is a `requirements.txt` too whatever floats your boat.
+`uv sync` installs the Python environment and registers `slurdle` in editable mode.
 You'll also need node modules for Tailwind:
 
 ```bash
@@ -101,7 +110,7 @@ yarn watch
 This pulls the list of racial slurs from [the racial slur database](http://rsdb.org/) and pops them in an sqlite3 db + makes some csv files.
 
 ```bash
-uv run main.py --init
+uv run slurdle --init
 ```
 
 `--refresh` does this but deletes the generated files first.
@@ -115,7 +124,7 @@ Uses TypeSafe AI's System One decision model (Jev) via OpenRouter to evaluate cu
 
 ```bash
 export OPENROUTER_API_KEY="your-key-here"
-uv run main.py --jev-weights
+uv run slurdle --jev-weights
 ```
 
 > Batches requests, checkpoints progress to `data/jev_weights_checkpoint.json` automatically, and resumes seamlessly if interrupted.
@@ -124,7 +133,7 @@ uv run main.py --jev-weights
 Generates cosine similarities using HuggingFace's `paraphrase-multilingual-mpnet-base-v2` locally without an API key:
 
 ```bash
-uv run main.py --weights
+uv run slurdle --weights
 ```
 
 > This step requires a GPU or patience — it takes a few minutes on CPU.
@@ -132,7 +141,7 @@ uv run main.py --weights
 ### 5. Run the app
 
 ```bash
-uv run main.py --run
+uv run slurdle --run
 ```
 
 The dev server starts at **http://localhost:5001**.
@@ -140,6 +149,8 @@ The dev server starts at **http://localhost:5001**.
 ---
 
 ## CLI cheat sheet
+
+All commands run through `uv run slurdle [FLAG]`:
 
 | Flag                  | Description                                                                                                        |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -179,7 +190,7 @@ uv run pytest -v          # verbose output
 uv run pytest --tb=short  # compact tracebacks
 ```
 
-There are **73 tests** because code quality matters even when you're writing a slur quiz.
+There are **77 tests** because code quality matters even when you're writing a slur quiz.
 
 ### Type checking
 

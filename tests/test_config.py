@@ -1,8 +1,8 @@
-"""Tests for ``src/config.py`` — validates that configuration constants
+"""Tests for ``slurdletwo/config.py`` — validates that configuration constants
 are well-formed and internally consistent.
 """
 
-from src.config import (
+from slurdletwo.config import (
     DATA_DIR,
     MAX_SEMANTIC_SIMILARITY,
     MIN_SEMANTIC_SIMILARITY,

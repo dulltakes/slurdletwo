@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from src.jev_weights import (
+from slurdletwo.ml.jev import (
     _load_pairwise_checkpoint,
     _make_pair_key,
     _save_pairwise_checkpoint,
@@ -65,8 +65,8 @@ class TestGenerateJevWeights:
         with pytest.raises(ValueError, match="API key missing"):
             generate_jev_weights(api_key=None)
 
-    @patch("src.jev_weights.fetch_unique_demographic_targets")
-    @patch("src.jev_weights.TypeSafeClient")
+    @patch("slurdletwo.ml.jev.fetch_unique_demographic_targets")
+    @patch("slurdletwo.ml.jev.TypeSafeClient")
     def test_generate_builds_symmetric_matrix(
         self, mock_client_cls, mock_fetch_targets, tmp_path
     ):
@@ -109,8 +109,8 @@ class TestGenerateJevWeights:
             for c in range(3):
                 assert df.iloc[r, c] == df.iloc[c, r]
 
-    @patch("src.jev_weights.fetch_unique_demographic_targets")
-    @patch("src.jev_weights.TypeSafeClient")
+    @patch("slurdletwo.ml.jev.fetch_unique_demographic_targets")
+    @patch("slurdletwo.ml.jev.TypeSafeClient")
     def test_resumes_from_checkpoint_without_reissuing_requests(
         self, mock_client_cls, mock_fetch_targets, tmp_path
     ):

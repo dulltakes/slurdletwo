@@ -1,4 +1,4 @@
-"""Tests for the ML similarity service (``src/ml_service.py``).
+"""Tests for the ML similarity service (``slurdletwo/ml/service.py``).
 
 Covers:
 - Service initialisation and weight loading
@@ -9,8 +9,8 @@ Covers:
 
 import pytest
 
-from src.config import MAX_SEMANTIC_SIMILARITY, MIN_SEMANTIC_SIMILARITY
-from src.ml_service import TargetSimilarityService
+from slurdletwo.config import MAX_SEMANTIC_SIMILARITY, MIN_SEMANTIC_SIMILARITY
+from slurdletwo.ml.service import TargetSimilarityService
 
 
 class TestTargetSimilarityServiceInit:
@@ -95,7 +95,7 @@ class TestTargetSimilarityServicePriority:
     """Tests for the weight CSV resolution priority."""
 
     def test_jev_weights_take_priority_over_mpnet(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.ml_service.DATA_DIR", tmp_path)
+        monkeypatch.setattr("slurdletwo.ml.service.DATA_DIR", tmp_path)
 
         jev_file = tmp_path / "target_weights_typesafe-jev.csv"
         mpnet_file = (
@@ -111,7 +111,7 @@ class TestTargetSimilarityServicePriority:
         assert list(service.weights_df.index) == ["A", "B"]
 
     def test_mpnet_fallback_when_jev_absent(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.ml_service.DATA_DIR", tmp_path)
+        monkeypatch.setattr("slurdletwo.ml.service.DATA_DIR", tmp_path)
 
         mpnet_file = (
             tmp_path / "target_weights_paraphrase-multilingual-mpnet-base-v2.csv"

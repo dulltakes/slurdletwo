@@ -1,10 +1,11 @@
 import sqlite3
+from pathlib import Path
 
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from src.config import DATA_DIR, SLURS_DB
+from slurdletwo.config import DATA_DIR, SLURS_DB
 
 MODELS = {
     "paraphrase-multilingual-mpnet-base-v2": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
@@ -62,12 +63,6 @@ def generate_similarity_weights():
 
 
 def qa_weights(custom_path=None):
-    from pathlib import Path
-
-    import pandas as pd
-
-    from src.config import DATA_DIR
-
     weights_path = (
         Path(custom_path)
         if custom_path
@@ -75,7 +70,7 @@ def qa_weights(custom_path=None):
     )
     if not weights_path.exists():
         print(
-            f"Error: {weights_path} not found. Run --weights-combined first or provide a valid path."
+            f"Error: {weights_path} not found. Run --weights first or provide a valid path."
         )
         return
 

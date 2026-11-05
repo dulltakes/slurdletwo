@@ -1,10 +1,12 @@
 import random
 import re
+import typing
 
 from sqlalchemy import text
 from sqlalchemy.sql.expression import func
 
-from src.models import Slur, db
+from slurdletwo.extensions import db
+from slurdletwo.models import Slur
 
 
 def get_random_slur_record():
@@ -26,8 +28,6 @@ def get_targets_excluding_substrings(target, limit=4):
     words = re.split(r"[\s/]+", cleaned_target)
 
     conditions = []
-    import typing
-
     params: dict[str, typing.Any] = {}
     for i, word in enumerate(words):
         if len(word) > 2:

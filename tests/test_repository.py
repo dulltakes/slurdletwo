@@ -6,7 +6,7 @@ Covers:
 - get_targets_excluding_substrings respects exclusion rules
 """
 
-from src.repository import (
+from slurdletwo.repository import (
     get_all_unique_targets,
     get_random_slur_record,
     get_targets_excluding_substrings,

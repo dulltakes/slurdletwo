@@ -6,14 +6,15 @@ so individual test modules stay focused on assertions.
 
 import pytest
 
-from app import app as flask_app
+from slurdletwo import create_app
+from slurdletwo.config import TestingConfig
 
 
 @pytest.fixture
 def app():
     """Yield the configured Flask app with TESTING mode enabled."""
-    flask_app.config["TESTING"] = True
-    yield flask_app
+    _app = create_app(TestingConfig)
+    yield _app
 
 
 @pytest.fixture

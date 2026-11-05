@@ -9,7 +9,7 @@ from typing import Any, cast
 import pandas as pd
 from typesafe_sdk import Noul, TypeSafeClient
 
-from src.config import (
+from slurdletwo.config import (
     DATA_DIR,
     MAX_SEMANTIC_SIMILARITY,
     MIN_SEMANTIC_SIMILARITY,
@@ -276,45 +276,42 @@ def qa_weights(custom_path: str | Path | None = None) -> None:
 
     print("\n--- TOP 25 CLOSEST DEMOGRAPHIC PAIRS (EXCLUDING SELF-MATCHES) ---")
     for val, t1, t2 in pairs[:25]:
-        print(f"  {t1:<28} <-> {t2:<28}: {val:.4f}")
+        print(f"  {t1:<28} <-> {t2:<28} : {val:.4f}")
 
     mid_idx = total_pairs // 2
     print("\n--- MIDDLE 10 DEMOGRAPHIC PAIRS ---")
-    for val, t1, t2 in pairs[max(0, mid_idx - 5) : min(total_pairs, mid_idx + 5)]:
-        print(f"  {t1:<28} <-> {t2:<28}: {val:.4f}")
+    for val, t1, t2 in pairs[mid_idx - 5 : mid_idx + 5]:
+        print(f"  {t1:<28} <-> {t2:<28} : {val:.4f}")
 
     print("\n--- BOTTOM 10 DEMOGRAPHIC PAIRS ---")
     for val, t1, t2 in pairs[-10:]:
-        print(f"  {t1:<28} <-> {t2:<28}: {val:.4f}")
+        print(f"  {t1:<28} <-> {t2:<28} : {val:.4f}")
 
-    # Distribution statistics within game corridors
-    below_corridor = sum(1 for s, _, _ in pairs if s < MIN_SEMANTIC_SIMILARITY)
-    inside_corridor = sum(
+    # Corridor statistics
+    below_corridor = sum(1 for val, _, _ in pairs if val < MIN_SEMANTIC_SIMILARITY)
+    in_corridor = sum(
         1
-        for s, _, _ in pairs
-        if MIN_SEMANTIC_SIMILARITY <= s <= MAX_SEMANTIC_SIMILARITY
+        for val, _, _ in pairs
+        if MIN_SEMANTIC_SIMILARITY <= val <= MAX_SEMANTIC_SIMILARITY
     )
-    above_corridor = sum(1 for s, _, _ in pairs if s > MAX_SEMANTIC_SIMILARITY)
+    above_corridor = sum(1 for val, _, _ in pairs if val > MAX_SEMANTIC_SIMILARITY)
 
     print("\n--- CORRIDOR DISTRIBUTION ---")
     print(
-        f"  Below Corridor (< {MIN_SEMANTIC_SIMILARITY:.2f})       : {below_corridor:>5} pairs "
-        f"({(below_corridor / total_pairs) * 100.0:>5.1f}%) [Obvious Non-Matches]"
+        f"  Below Corridor (< {MIN_SEMANTIC_SIMILARITY:.2f})       : {below_corridor:5d} pairs ({below_corridor / total_pairs * 100.0:5.1f}%) [Obvious Non-Matches]"
     )
     print(
-        f"  Inside Corridor ({MIN_SEMANTIC_SIMILARITY:.2f} - {MAX_SEMANTIC_SIMILARITY:.2f}) : {inside_corridor:>5} pairs "
-        f"({(inside_corridor / total_pairs) * 100.0:>5.1f}%) [Viable Distractors]"
+        f"  Inside Corridor ({MIN_SEMANTIC_SIMILARITY:.2f} - {MAX_SEMANTIC_SIMILARITY:.2f}) : {in_corridor:5d} pairs ({in_corridor / total_pairs * 100.0:5.1f}%) [Viable Distractors]"
     )
     print(
-        f"  Above Corridor (> {MAX_SEMANTIC_SIMILARITY:.2f})       : {above_corridor:>5} pairs "
-        f"({(above_corridor / total_pairs) * 100.0:>5.1f}%) [Near-Synonyms]"
+        f"  Above Corridor (> {MAX_SEMANTIC_SIMILARITY:.2f})       : {above_corridor:5d} pairs ({above_corridor / total_pairs * 100.0:5.1f}%) [Near-Synonyms]"
     )
     print("=" * 64)
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(
-        description="Generate demographic similarity weights using TypeSafe AI's Jev model via OpenRouter."
+        description="Generate and evaluate pairwise demographic similarities using TypeSafe Jev via OpenRouter"
     )
     parser.add_argument(
         "--generate", action="store_true", help="Generate similarity matrix for targets"

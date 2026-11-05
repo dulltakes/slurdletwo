@@ -2,9 +2,9 @@ import random
 
 import pandas as pd
 
-from src.config import DATA_DIR
-from src.ml_service import ml_service
-from src.repository import (
+from slurdletwo.config import DATA_DIR
+from slurdletwo.ml.service import ml_service
+from slurdletwo.repository import (
     get_random_slur_record,
     get_targets_excluding_substrings,
 )
@@ -61,7 +61,7 @@ def ask_question(question):
 
 def debug_targets():
     debug_list = []
-    for i in range(10000):
+    for _ in range(10000):
         slur_record = get_random_slur_record()
         if not slur_record:
             continue

@@ -2,7 +2,7 @@ import random
 
 import pandas as pd
 
-from src.config import DATA_DIR, MAX_SEMANTIC_SIMILARITY, MIN_SEMANTIC_SIMILARITY
+from slurdletwo.config import DATA_DIR, MAX_SEMANTIC_SIMILARITY, MIN_SEMANTIC_SIMILARITY
 
 
 class TargetSimilarityService:

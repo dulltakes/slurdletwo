@@ -6,8 +6,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-# Import all needed paths from config
-from src.config import DATA_DIR, SLURS_DB
+from slurdletwo.config import DATA_DIR, SLURS_DB
 
 # Keep the intermediate files local to this script
 SLURS_PATH = DATA_DIR / "slurs.html"
@@ -50,7 +49,6 @@ logging.basicConfig(
 
 def clean_data_dir():
     logging.info("Cleaning data directory...")
-    # Use the local variables and the imported config variable
     SLURS_PATH.unlink(missing_ok=True)
     SLURS_CSV.unlink(missing_ok=True)
     SLURS_DB.unlink(missing_ok=True)
@@ -103,7 +101,6 @@ def create_dataframe():
 
 def create_db(df):
     logging.info("Loading DataFrame into SQLite3 db...")
-    # Use the imported SLURS_DB directly
     conn = sqlite3.connect(SLURS_DB)
     df.to_sql("slurs", conn, index=False, if_exists="replace")
     conn.close()

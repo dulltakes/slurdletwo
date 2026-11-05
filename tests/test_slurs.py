@@ -1,4 +1,4 @@
-"""Tests for the game logic in ``src/slurs.py``.
+"""Tests for the game logic in ``slurdletwo/game.py``.
 
 Covers:
 - assemble_question structure and content
@@ -8,8 +8,8 @@ Covers:
 
 import pytest
 
-from src.repository import get_random_slur_record
-from src.slurs import assemble_question, get_other_targets
+from slurdletwo.game import assemble_question, get_other_targets
+from slurdletwo.repository import get_random_slur_record
 
 
 class TestAssembleQuestion:
