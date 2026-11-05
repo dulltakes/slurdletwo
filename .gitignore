@@ -412,4 +412,7 @@ node_modules/
 README_old.md
 .idea/
 skills-lock.json
+# GTM container exports
+docs/gtm_slurdle_*.json
+
 .DS_Store
