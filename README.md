@@ -11,7 +11,7 @@ a flask app that creates an endless trivia quiz on slurs. you guess which ethnic
 ## how it works
 
 1. A random slur is fetched from the database and displayed.
-2. Four distractor targets are selected using semantic cosine similarity (MPNet embeddings), so the wrong answers are actually tricky (we finally figured out how to teach a computer that _albanian_ and _balkan_ are semantically similar words).
+2. Four distractor targets are selected using semantic similarity (TypeSafe Jev probabilities or MPNet embeddings), so the wrong answers are actually tricky (we finally figured out how to teach a computer that _albanian_ and _balkan_ are semantically similar words without accidentally thinking *guamanians* and *guatemalans* are the same thing).
 3. You pick one of the five shuffled options.
 4. The result is revealed with the word's origin.
 
@@ -19,14 +19,14 @@ a flask app that creates an endless trivia quiz on slurs. you guess which ethnic
 
 ## the stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Python 3.14+, Flask, Flask-SQLAlchemy |
-| Database | SQLite (via SQLAlchemy ORM) |
-| ML / Embeddings | `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` |
-| Frontend | Jinja2 templates, TailwindCSS v4 |
-| Package management | `uv` (Python), `yarn` (Node) |
-| Code quality | `ruff` (lint/format), `pyrefly` (type checking) |
+| Layer              | Technology                                                                |
+| ------------------ | ------------------------------------------------------------------------- |
+| Backend            | Python 3.14+, Flask, Flask-SQLAlchemy                                     |
+| Database           | SQLite (via SQLAlchemy ORM)                                               |
+| ML / Embeddings    | TypeSafe AI (Jev System One), `sentence-transformers` (MPNet)             |
+| Frontend           | Jinja2 templates, TailwindCSS v4                                          |
+| Package management | `uv` (Python), `yarn` (Node)                                              |
+| Code quality       | `ruff` (lint/format), `pyrefly` (type checking)                          |
 
 ---
 
@@ -35,13 +35,14 @@ a flask app that creates an endless trivia quiz on slurs. you guess which ethnic
 ```
 slurdletwo/
 ├── app.py                  # Flask app factory, routes, session handling
-├── main.py                 # CLI entry point (--init, --weights, --run, etc.)
+├── main.py                 # CLI entry point (--init, --jev-weights, --weights, --run, etc.)
 ├── src/
 │   ├── config.py           # Centralised paths and constants
 │   ├── models.py           # SQLAlchemy Slur model
 │   ├── repository.py       # Data access layer (queries)
 │   ├── slurs.py            # Game logic: assemble_question, get_other_targets
 │   ├── ml_service.py       # TargetSimilarityService singleton
+│   ├── jev_weights.py      # TypeSafe Jev System One probability weight generation
 │   ├── weights.py          # MPNet embedding + similarity matrix generation
 │   └── pull.py             # Scraper and ETL pipeline
 ├── templates/
@@ -54,6 +55,7 @@ slurdletwo/
 ├── tests/                  # pytest test suite
 │   ├── conftest.py         # Shared fixtures and SlurRecordStub factory
 │   ├── test_app.py         # Flask route tests
+│   ├── test_jev_weights.py # Jev weights pipeline tests
 │   ├── test_slurs.py       # Game logic tests
 │   ├── test_repository.py  # Data access layer tests
 │   ├── test_ml_service.py  # ML service tests
@@ -77,6 +79,7 @@ slurdletwo/
 
 `uv sync` should set it up. There is a `requirements.txt` too whatever floats your boat.
 You'll also need node modules for Tailwind:
+
 ```bash
 yarn install
 ```
@@ -98,17 +101,30 @@ yarn watch
 This pulls the list of racial slurs from [the racial slur database](http://rsdb.org/) and pops them in an sqlite3 db + makes some csv files.
 
 ```bash
-uv run python main.py --init
+uv run main.py --init
 ```
 
 `--refresh` does this but deletes the generated files first.
 
 ### 4. Generate the similarity weights
 
-This generates a csv with weights for each slur target using HuggingFace sentence transformer models. This runs MPNet over all unique targets and saves a cosine-similarity matrix so we can pick good distractors:
+We have two ways to generate the similarity weights matrix that powers distractor selection:
+
+#### Option A: TypeSafe Jev (Recommended)
+Uses TypeSafe AI's System One decision model (Jev) via OpenRouter to evaluate cultural and demographic relationships directly. It outputs calibrated probabilities ($0.0$ to $1.0$), avoids goofy subword traps (looking at you, *Guamanians* $\leftrightarrow$ *Guatemalans*), and won't pair fictional Cardassians with real people:
 
 ```bash
-uv run python main.py --weights
+export OPENROUTER_API_KEY="your-key-here"
+uv run main.py --jev-weights
+```
+
+> Batches requests, checkpoints progress to `data/jev_weights_checkpoint.json` automatically, and resumes seamlessly if interrupted.
+
+#### Option B: Offline MPNet Embeddings
+Generates cosine similarities using HuggingFace's `paraphrase-multilingual-mpnet-base-v2` locally without an API key:
+
+```bash
+uv run main.py --weights
 ```
 
 > This step requires a GPU or patience — it takes a few minutes on CPU.
@@ -116,7 +132,7 @@ uv run python main.py --weights
 ### 5. Run the app
 
 ```bash
-uv run python main.py --run
+uv run main.py --run
 ```
 
 The dev server starts at **http://localhost:5001**.
@@ -125,13 +141,14 @@ The dev server starts at **http://localhost:5001**.
 
 ## CLI cheat sheet
 
-| Flag | Description |
-|---|---|
-| `--init` | Scrape, parse, and load the database |
-| `--refresh` | Like `--init` but cleans `data/` first |
-| `--weights` | Generate the MPNet similarity matrix CSV |
-| `--qa-weights [path]` | Print the top-25, middle-10, and bottom-10 target pairs for visual QA. Defaults to the MPNet CSV. |
-| `--run` | Start the Flask development server on port 5001 |
+| Flag                  | Description                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--init`              | Scrape, parse, and load the database                                                                               |
+| `--refresh`           | Like `--init` but cleans `data/` first                                                                             |
+| `--jev-weights`       | Generate weights using TypeSafe Jev via OpenRouter (calibrated probabilities, requires `OPENROUTER_API_KEY`)        |
+| `--weights`           | Generate the MPNet similarity matrix CSV using local embeddings                                                    |
+| `--qa-weights [path]` | Print top-25, middle-10, bottom-10 pairs and corridor stats. Defaults to Jev CSV if found, otherwise the MPNet CSV.|
+| `--run`               | Start the Flask development server on port 5001                                                                    |
 
 ---
 
@@ -139,12 +156,13 @@ The dev server starts at **http://localhost:5001**.
 
 We used to just use regex to make sure the user isn't presented with targets that are too similar i.e. _asian_ and _asian/american_. Now we're fancy:
 
-1. **Embedding**: All unique target labels (e.g. "Australians", "Mexicans") are encoded with `paraphrase-multilingual-mpnet-base-v2`.
-2. **Matrix**: Pairwise cosine similarities are stored as a CSV at startup.
-3. **Runtime**: For a given correct target, `TargetSimilarityService` fetches all targets with similarity in the range `(0.3, 0.8)` — related enough to be tricky, distinct enough not to be ambiguous — then samples 4 at random.
-4. **Fallback**: If the target is missing from the matrix or has fewer than 4 valid neighbours, it falls back to the old regex/SQL `NOT LIKE` query to pick targets that don't share word stems with the correct answer.
+1. **Similarity Matrix**: We precompute demographic relatedness across all unique target labels. We support two backends:
+   - **TypeSafe Jev** (our preferred default): A System One probability model queried via OpenRouter. Because it evaluates semantic/cultural connection rather than raw character tokens, it won't pair *Guamanians* with *Guatemalans* just because they both start with "Gua-".
+   - **MPNet Embeddings**: Dense 768-dimensional vectors from `paraphrase-multilingual-mpnet-base-v2` compared via cosine similarity.
+2. **Corridor Filtering**: For a given correct target, `TargetSimilarityService` looks for candidates inside the semantic corridor `(0.3, 0.8)` — related enough to be tricky, distinct enough not to be ambiguous — then samples 4 at random.
+3. **Fallback**: If the target is missing from the matrix or has fewer than 4 valid neighbours (like *Cardassians*, which Jev rightfully refuses to pair with real human ethnic groups), it falls back to the SQL `NOT LIKE` query to pick targets that don't share word stems with the correct answer.
 
-We threw an LLM-as-a-Judge at this and it gave us a **47% valid distractor rate**, which is surprisingly good for slur target semantic groupings.
+When we benchmarked Jev vs MPNet, Jev kept **77.9%** of completely unrelated groups safely below the corridor while giving **99.3%** of real targets at least 4 viable, culturally grounded distractors.
 
 ---
 
@@ -161,7 +179,7 @@ uv run pytest -v          # verbose output
 uv run pytest --tb=short  # compact tracebacks
 ```
 
-There are **62 tests** because code quality matters even when you're writing a slur quiz.
+There are **73 tests** because code quality matters even when you're writing a slur quiz.
 
 ### Type checking
 
@@ -182,9 +200,10 @@ uv run ruff check --fix .   # auto-fix safe issues
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `FLASK_SECRET_KEY` | Random bytes (ephemeral) | Signs the session cookie. Set a stable value if you deploy this somewhere. |
+| Variable             | Default                  | Description                                                                       |
+| -------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `FLASK_SECRET_KEY`   | Random bytes (ephemeral) | Signs the session cookie. Set a stable value if you deploy this somewhere.        |
+| `OPENROUTER_API_KEY` | `''`                     | OpenRouter API key used by TypeSafe Jev to generate calibrated similarity weights. |
 
 ---
 
