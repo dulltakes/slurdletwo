@@ -1,6 +1,14 @@
 """Gameplay routes for the Slurdle trivia game."""
 
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    jsonify,
+    render_template,
+    request,
+    session,
+)
 
 from slurdletwo.game import (
     assemble_question,
@@ -95,3 +103,17 @@ def guess():
             )
 
     return jsonify({"correct": False})
+
+
+@game_bp.route("/robots.txt", methods=["GET"])
+def robots_txt() -> Response:
+    """Serve the robots.txt file for search engine crawlers."""
+    return current_app.send_static_file("robots.txt")
+
+
+@game_bp.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml() -> Response:
+    """Serve the XML sitemap for search engine crawlers."""
+    response = current_app.send_static_file("sitemap.xml")
+    response.mimetype = "application/xml"
+    return response

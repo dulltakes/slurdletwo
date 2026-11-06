@@ -115,10 +115,45 @@ class TestGuessRouteEdgeCases:
             }
 
         # User is still answering "Hoosier" with "Whites"
-        resp = client.post(
-            "/guess", json={"target": "Whites", "slur": "Hoosier"}
-        )
+        resp = client.post("/guess", json={"target": "Whites", "slur": "Hoosier"})
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["correct"] is True
         assert "Hoosier refers to Whites" in data["message"]
+
+
+class TestRobotsRoute:
+    """GET /robots.txt — serves crawler directives and sitemap reference."""
+
+    def test_returns_200(self, client):
+        response = client.get("/robots.txt")
+        assert response.status_code == 200
+
+    def test_content_type_plain_text(self, client):
+        response = client.get("/robots.txt")
+        assert "text/plain" in response.content_type
+
+    def test_contains_user_agent_and_sitemap(self, client):
+        response = client.get("/robots.txt")
+        text = response.data.decode("utf-8")
+        assert "User-agent: *" in text
+        assert "Sitemap: https://dulltakes.golf/sitemap.xml" in text
+        assert "Disallow: /guess" in text
+
+
+class TestSitemapRoute:
+    """GET /sitemap.xml — serves valid XML sitemap."""
+
+    def test_returns_200(self, client):
+        response = client.get("/sitemap.xml")
+        assert response.status_code == 200
+
+    def test_content_type_xml(self, client):
+        response = client.get("/sitemap.xml")
+        assert "application/xml" in response.content_type
+
+    def test_contains_canonical_url(self, client):
+        response = client.get("/sitemap.xml")
+        text = response.data.decode("utf-8")
+        assert "https://dulltakes.golf/" in text
+        assert "<urlset" in text

@@ -156,7 +156,7 @@ def test_viewport_no_overflow_and_ratio(
             const html = document.documentElement;
             const card = document.getElementById('question');
             const h1 = document.querySelector('h1');
-            const qBox = card.querySelector('.text-center > div');
+            const qBox = card.querySelector('.text-center > h2, .text-center > div');
 
             return {
                 scrollHeight: html.scrollHeight,
