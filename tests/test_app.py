@@ -51,6 +51,23 @@ class TestIndexRoute:
         expected_title = f"<title>{slur}</title>".encode()
         assert expected_title in response.data
 
+    def test_renders_consent_mode_script(self, client):
+        """Google Consent Mode v2 default setup must be present in <head>."""
+        response = client.get("/slurdle/")
+        html = response.data.decode("utf-8")
+        assert "gtag('consent', 'default'" in html
+        assert "analytics_storage" in html
+        assert "ad_storage" in html
+
+    def test_renders_cookie_banner(self, client):
+        """The neobrutalist cookie banner elements must be in the page."""
+        response = client.get("/slurdle/")
+        html = response.data.decode("utf-8")
+        assert 'id="cookie-banner"' in html
+        assert 'id="consent-yes-btn"' in html
+        assert 'id="consent-no-btn"' in html
+        assert "Can I set cookies?" in html
+
 
 class TestGuessRouteCorrect:
     """POST /slurdle/guess — when the user picks the right answer."""

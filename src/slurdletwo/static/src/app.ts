@@ -15,6 +15,11 @@ const nextBtn = document.getElementById("next-btn") as HTMLButtonElement | null;
 const dialog = document.getElementById("result-dialog") as HTMLDialogElement | null;
 const dialogText = document.getElementById("dialog-text") as HTMLElement | null;
 const slurElement = document.getElementById("current-slur") as HTMLElement | null;
+const cookieBanner = document.getElementById("cookie-banner") as HTMLElement | null;
+const consentYesBtn = document.getElementById("consent-yes-btn") as HTMLButtonElement | null;
+const consentNoBtn = document.getElementById("consent-no-btn") as HTMLButtonElement | null;
+
+const CONSENT_STORAGE_KEY = "dt_cookie_consent";
 
 const BASE_PATH = "/slurdle";
 
@@ -28,6 +33,7 @@ let levelEnded = false;
 declare global {
   interface Window {
     dataLayer: any[];
+    gtag?: (...args: any[]) => void;
   }
 }
 
@@ -158,4 +164,55 @@ if (nextBtn) {
         window.location.href = `${BASE_PATH}/`;
       });
   });
+}
+
+function handleConsentUpdate(granted: boolean): void {
+  const status = granted ? "granted" : "denied";
+  try {
+    localStorage.setItem(CONSENT_STORAGE_KEY, status);
+  } catch (err) {
+    console.warn("Unable to save consent preference to localStorage", err);
+  }
+
+  // 1. Update Google Consent Mode v2
+  if (typeof window.gtag === "function") {
+    window.gtag("consent", "update", {
+      ad_storage: status,
+      ad_user_data: status,
+      ad_personalization: status,
+      analytics_storage: status,
+    });
+  }
+
+  // 2. Push event to dataLayer
+  window.dataLayer.push({
+    event: "cookie_consent_update",
+    consent_status: status,
+    consent_analytics: status,
+    consent_marketing: status,
+  });
+
+  // 3. Dismiss banner
+  if (cookieBanner) {
+    cookieBanner.classList.add("hidden");
+  }
+}
+
+// Show cookie banner if user has not yet decided
+try {
+  if (cookieBanner && !localStorage.getItem(CONSENT_STORAGE_KEY)) {
+    cookieBanner.classList.remove("hidden");
+  }
+} catch {
+  if (cookieBanner) {
+    cookieBanner.classList.remove("hidden");
+  }
+}
+
+if (consentYesBtn) {
+  consentYesBtn.addEventListener("click", () => handleConsentUpdate(true));
+}
+
+if (consentNoBtn) {
+  consentNoBtn.addEventListener("click", () => handleConsentUpdate(false));
 }
