@@ -20,6 +20,9 @@ SQLALCHEMY_DATABASE_URI = f"sqlite:///{SLURS_DB}"
 class Config:
     """Base application configuration."""
 
+    URL_PREFIX = os.environ.get("URL_PREFIX", "/slurdle")
+    APPLICATION_ROOT = os.environ.get("URL_PREFIX", "/slurdle")
+    SESSION_COOKIE_PATH = os.environ.get("URL_PREFIX", "/slurdle")
     SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or os.urandom(24)
     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False

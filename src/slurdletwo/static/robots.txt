@@ -1,7 +1,7 @@
 User-agent: *
-Allow: /
-Disallow: /guess
-Disallow: /next
+Allow: /slurdle/
+Disallow: /slurdle/guess
+Disallow: /slurdle/next
 Disallow: /wisp/
 
 Sitemap: https://dulltakes.golf/sitemap.xml

@@ -28,3 +28,4 @@ class TestApplicationFactory:
     def test_create_app_blueprint_registered(self):
         app = create_app(TestingConfig)
         assert "game" in app.blueprints
+        assert app.static_url_path == "/slurdle/static"

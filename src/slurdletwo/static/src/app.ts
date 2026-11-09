@@ -16,7 +16,12 @@ const dialog = document.getElementById("result-dialog") as HTMLDialogElement | n
 const dialogText = document.getElementById("dialog-text") as HTMLElement | null;
 const slurElement = document.getElementById("current-slur") as HTMLElement | null;
 
+const BASE_PATH = "/slurdle";
+
 let currentSlur = slurElement ? (slurElement.textContent?.trim() || "Unknown") : "Unknown";
+if (currentSlur && currentSlur !== "Unknown") {
+  document.title = currentSlur;
+}
 let guessAttempts = 0;
 let levelEnded = false;
 
@@ -60,7 +65,7 @@ function handleTargetClick(e: MouseEvent) {
   const clickedTarget = targetEl.textContent?.trim() || "";
   guessAttempts++;
 
-  fetch("/guess", {
+  fetch(`${BASE_PATH}/guess`, {
     method: "POST",
     body: JSON.stringify({ target: clickedTarget, slur: currentSlur }),
     headers: { "Content-Type": "application/json; charset=UTF-8" }
@@ -114,13 +119,14 @@ if (nextBtn) {
     });
     
     // SPA Fetch next question instead of reloading
-    fetch("/next")
+    fetch(`${BASE_PATH}/next`)
       .then(r => r.json() as Promise<NextQuestionResponse>)
       .then(data => {
         // Reset state
         guessAttempts = 0;
         levelEnded = false;
         currentSlur = data.slur;
+        document.title = currentSlur;
         
         if (slurElement) {
           slurElement.textContent = currentSlur;
@@ -149,7 +155,7 @@ if (nextBtn) {
       .catch(err => {
         console.error("Failed to fetch next question", err);
         // Fallback to full page reload if SPA fetch fails for any reason
-        window.location.href = "/";
+        window.location.href = `${BASE_PATH}/`;
       });
   });
 }

@@ -54,3 +54,14 @@ class TestSimilarityThresholds:
     def test_thresholds_are_floats(self):
         assert isinstance(MIN_SEMANTIC_SIMILARITY, float)
         assert isinstance(MAX_SEMANTIC_SIMILARITY, float)
+
+
+class TestConfigPrefix:
+    """Validate subpath and session cookie path configuration defaults."""
+
+    def test_default_url_prefix(self):
+        from slurdletwo.config import Config
+
+        assert Config.URL_PREFIX == "/slurdle"
+        assert Config.SESSION_COOKIE_PATH == "/slurdle"
+        assert Config.APPLICATION_ROOT == "/slurdle"

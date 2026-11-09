@@ -188,3 +188,44 @@ def test_viewport_no_overflow_and_ratio(
             f"Title width {metrics['titleWidth']}px exceeds question box {metrics['questionWidth']}px "
             f"on {viewport['name']}"
         )
+
+
+def test_page_title_matches_slur_and_updates_on_next(live_server_url: str) -> None:
+    """Verify that document.title is initialized to the slur and updates on next question."""
+    chrome_bin = _find_system_chrome()
+    if not chrome_bin:
+        pytest.skip("Chrome binary not available for headless browser layout test")
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        pytest.skip("Playwright not installed in current environment")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(executable_path=chrome_bin, headless=True)
+        page = browser.new_page()
+        page.goto(live_server_url)
+
+        initial_slur = page.locator("#current-slur").text_content()
+        assert initial_slur is not None
+        assert page.title() == initial_slur.strip()
+
+        # Simulate clicking the next question button
+        page.evaluate("""() => {
+            const nextBtn = document.getElementById("next-btn");
+            if (nextBtn) {
+                nextBtn.click();
+            }
+        }""")
+
+        # Wait for the next question to load
+        page.wait_for_function(
+            "oldSlur => document.getElementById('current-slur').textContent.trim() !== oldSlur",
+            arg=initial_slur.strip(),
+        )
+
+        updated_slur = page.locator("#current-slur").text_content()
+        assert updated_slur is not None
+        assert page.title() == updated_slur.strip()
+
+        browser.close()

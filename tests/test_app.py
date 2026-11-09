@@ -10,37 +10,50 @@ import pytest
 
 
 class TestIndexRoute:
-    """GET / — renders the game page and populates the session."""
+    """GET /slurdle/ — renders the game page and populates the session."""
+
+    def test_root_redirects_to_slurdle(self, client):
+        response = client.get("/")
+        assert response.status_code == 302
+        assert response.headers["Location"] == "/slurdle/"
 
     def test_returns_200(self, client):
-        response = client.get("/")
+        response = client.get("/slurdle/")
         assert response.status_code == 200
 
     def test_renders_game_title(self, client):
-        response = client.get("/")
+        response = client.get("/slurdle/")
         assert b"SLURDLE" in response.data
 
     def test_populates_session_with_correct_target(self, client):
-        """After loading /, the session must contain the answer."""
-        client.get("/")
+        """After loading /slurdle/, the session must contain the answer."""
+        client.get("/slurdle/")
         with client.session_transaction() as sess:
             assert "correct_target" in sess
             assert isinstance(sess["correct_target"], str)
             assert len(sess["correct_target"]) > 0
 
     def test_populates_session_with_slur(self, client):
-        client.get("/")
+        client.get("/slurdle/")
         with client.session_transaction() as sess:
             assert "slur" in sess
 
     def test_populates_session_with_origin(self, client):
-        client.get("/")
+        client.get("/slurdle/")
         with client.session_transaction() as sess:
             assert "origin" in sess
 
+    def test_page_title_is_slur(self, client):
+        """The <title> tag should be set to the current question's slur."""
+        response = client.get("/slurdle/")
+        with client.session_transaction() as sess:
+            slur = sess["slur"]
+        expected_title = f"<title>{slur}</title>".encode()
+        assert expected_title in response.data
+
 
 class TestGuessRouteCorrect:
-    """POST /guess — when the user picks the right answer."""
+    """POST /slurdle/guess — when the user picks the right answer."""
 
     @pytest.fixture(autouse=True)
     def _seed_session(self, client):
@@ -50,24 +63,24 @@ class TestGuessRouteCorrect:
             sess["origin"] = "test_origin"
 
     def test_correct_guess_returns_200(self, client):
-        resp = client.post("/guess", json={"target": "Australians"})
+        resp = client.post("/slurdle/guess", json={"target": "Australians"})
         assert resp.status_code == 200
 
     def test_correct_guess_json_flag(self, client):
-        data = client.post("/guess", json={"target": "Australians"}).get_json()
+        data = client.post("/slurdle/guess", json={"target": "Australians"}).get_json()
         assert data["correct"] is True
 
     def test_correct_guess_message_contains_target(self, client):
-        data = client.post("/guess", json={"target": "Australians"}).get_json()
+        data = client.post("/slurdle/guess", json={"target": "Australians"}).get_json()
         assert "refers to Australians" in data["message"]
 
     def test_correct_guess_message_contains_origin(self, client):
-        data = client.post("/guess", json={"target": "Australians"}).get_json()
+        data = client.post("/slurdle/guess", json={"target": "Australians"}).get_json()
         assert "test_origin" in data["message"]
 
 
 class TestGuessRouteIncorrect:
-    """POST /guess — when the user picks the wrong answer."""
+    """POST /slurdle/guess — when the user picks the wrong answer."""
 
     @pytest.fixture(autouse=True)
     def _seed_session(self, client):
@@ -77,20 +90,20 @@ class TestGuessRouteIncorrect:
             sess["origin"] = "test_origin"
 
     def test_incorrect_guess_returns_200(self, client):
-        resp = client.post("/guess", json={"target": "Brazilians"})
+        resp = client.post("/slurdle/guess", json={"target": "Brazilians"})
         assert resp.status_code == 200
 
     def test_incorrect_guess_json_flag(self, client):
-        data = client.post("/guess", json={"target": "Brazilians"}).get_json()
+        data = client.post("/slurdle/guess", json={"target": "Brazilians"}).get_json()
         assert data["correct"] is False
 
 
 class TestGuessRouteEdgeCases:
-    """POST /guess — boundary and error paths."""
+    """POST /slurdle/guess — boundary and error paths."""
 
     def test_missing_session_does_not_crash(self, client):
         """If the session expired, the endpoint should still return JSON."""
-        resp = client.post("/guess", json={"target": "anything"})
+        resp = client.post("/slurdle/guess", json={"target": "anything"})
         assert resp.status_code == 200
         data = resp.get_json()
         # correct_target is None, so any guess is "incorrect"
@@ -98,7 +111,7 @@ class TestGuessRouteEdgeCases:
 
     def test_empty_json_body(self, client):
         """An empty JSON body should not cause a 500."""
-        resp = client.post("/guess", json={})
+        resp = client.post("/slurdle/guess", json={})
         assert resp.status_code == 200
 
     def test_recent_question_fallback_when_active_round_rotated(self, client):
@@ -115,11 +128,34 @@ class TestGuessRouteEdgeCases:
             }
 
         # User is still answering "Hoosier" with "Whites"
-        resp = client.post("/guess", json={"target": "Whites", "slur": "Hoosier"})
+        resp = client.post(
+            "/slurdle/guess", json={"target": "Whites", "slur": "Hoosier"}
+        )
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["correct"] is True
         assert "Hoosier refers to Whites" in data["message"]
+
+
+class TestNextRoute:
+    """GET /slurdle/next — returns JSON for next question and updates session."""
+
+    def test_returns_200_json(self, client):
+        response = client.get("/slurdle/next")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "slur" in data
+        assert "correct_target" in data
+        assert "targets" in data
+        assert "origin" in data
+        assert len(data["targets"]) == 5
+
+    def test_updates_session_with_next_slur(self, client):
+        response = client.get("/slurdle/next")
+        data = response.get_json()
+        with client.session_transaction() as sess:
+            assert sess["slur"] == data["slur"]
+            assert sess["correct_target"] == data["correct_target"]
 
 
 class TestRobotsRoute:
@@ -138,7 +174,8 @@ class TestRobotsRoute:
         text = response.data.decode("utf-8")
         assert "User-agent: *" in text
         assert "Sitemap: https://dulltakes.golf/sitemap.xml" in text
-        assert "Disallow: /guess" in text
+        assert "Disallow: /slurdle/guess" in text
+        assert "Disallow: /slurdle/next" in text
 
 
 class TestSitemapRoute:
@@ -155,5 +192,5 @@ class TestSitemapRoute:
     def test_contains_canonical_url(self, client):
         response = client.get("/sitemap.xml")
         text = response.data.decode("utf-8")
-        assert "https://dulltakes.golf/" in text
+        assert "https://dulltakes.golf/slurdle/" in text
         assert "<urlset" in text
