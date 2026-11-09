@@ -5,7 +5,11 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      var savedConsent = localStorage.getItem('dt_cookie_consent');
+      function getConsentCookie() {
+        var match = document.cookie.match(/(^|;\s*)dt_cookie_consent=([^;]+)/);
+        return match ? match[2] : null;
+      }
+      var savedConsent = getConsentCookie();
       var isGranted = savedConsent === 'granted';
       gtag('consent', 'default', {
         'ad_storage': isGranted ? 'granted' : 'denied',

@@ -23,6 +23,15 @@ const CONSENT_STORAGE_KEY = "dt_cookie_consent";
 
 const BASE_PATH = "/slurdle";
 
+const TARGET_BASE_CLASSES =
+  "target flex items-center py-2.5 px-3.5 sm:p-4 rounded-none border-4 border-black font-bold uppercase shadow-brutal text-[1rem] sm:text-[1.2rem]";
+const TARGET_DEFAULT_CLASSES =
+  `${TARGET_BASE_CLASSES} cursor-pointer bg-white text-black transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active`;
+const TARGET_CORRECT_CLASSES =
+  `${TARGET_BASE_CLASSES} cursor-default bg-brutal-green text-black`;
+const TARGET_WRONG_CLASSES =
+  `${TARGET_BASE_CLASSES} cursor-not-allowed bg-red-500 text-white animate-shake`;
+
 let currentSlur = slurElement ? (slurElement.textContent?.trim() || "Unknown") : "Unknown";
 if (currentSlur && currentSlur !== "Unknown") {
   document.title = currentSlur;
@@ -89,7 +98,7 @@ function handleTargetClick(e: MouseEvent) {
 
       if (data.correct) {
         // Keep it green when clicked
-        targetEl.className = "target cursor-default p-4 rounded-none bg-brutal-green border-4 border-black text-black font-bold shadow-brutal text-[1rem] sm:text-[1.2rem] uppercase";
+        targetEl.className = TARGET_CORRECT_CLASSES;
 
         if (dialogText) dialogText.innerText = toSmartQuotes(data.message || "");
         if (nextBtn) nextBtn.classList.remove("hidden");
@@ -108,7 +117,7 @@ function handleTargetClick(e: MouseEvent) {
 
       } else {
         // Apply the red error styling and the shake animation
-        targetEl.className = "target cursor-not-allowed p-4 rounded-none bg-red-500 border-4 border-black text-white font-bold animate-shake shadow-brutal text-[1rem] sm:text-[1.2rem] uppercase";
+        targetEl.className = TARGET_WRONG_CLASSES;
       }
     })
     .catch(err => console.error("Guess request failed", err));
@@ -143,7 +152,7 @@ if (nextBtn) {
           targetsList.innerHTML = "";
           data.targets.forEach((targetStr) => {
             const li = document.createElement("li");
-            li.className = "target cursor-pointer flex items-center p-4 rounded-none bg-white border-4 border-black text-black font-bold uppercase shadow-brutal transition-all duration-150 hover:bg-brutal-pink hover:text-white hover:shadow-brutal-hover active:shadow-brutal-active text-[1rem] sm:text-[1.2rem]";
+            li.className = TARGET_DEFAULT_CLASSES;
             li.textContent = targetStr;
             targetsList.appendChild(li);
           });
@@ -166,8 +175,20 @@ if (nextBtn) {
   });
 }
 
+const CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24; // 24 hours (86,400 seconds)
+
+function getConsentCookie(): string | null {
+  const match = document.cookie.match(/(^|;\s*)dt_cookie_consent=([^;]+)/);
+  return match ? match[2] : null;
+}
+
+function setConsentCookie(value: string): void {
+  document.cookie = `dt_cookie_consent=${value}; path=/; max-age=${CONSENT_MAX_AGE_SECONDS}; SameSite=Lax`;
+}
+
 function handleConsentUpdate(granted: boolean): void {
   const status = granted ? "granted" : "denied";
+  setConsentCookie(status);
   try {
     localStorage.setItem(CONSENT_STORAGE_KEY, status);
   } catch (err) {
@@ -198,15 +219,15 @@ function handleConsentUpdate(granted: boolean): void {
   }
 }
 
-// Show cookie banner if user has not yet decided
-try {
-  if (cookieBanner && !localStorage.getItem(CONSENT_STORAGE_KEY)) {
-    cookieBanner.classList.remove("hidden");
+// Show cookie banner if user has not yet decided or if the 24h cookie expired
+const consentCookie = getConsentCookie();
+if (cookieBanner && !consentCookie) {
+  try {
+    localStorage.removeItem(CONSENT_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors
   }
-} catch {
-  if (cookieBanner) {
-    cookieBanner.classList.remove("hidden");
-  }
+  cookieBanner.classList.remove("hidden");
 }
 
 if (consentYesBtn) {

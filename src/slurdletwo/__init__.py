@@ -30,6 +30,10 @@ def create_app(config: Config | type[Config] | None = None) -> Flask:
 
     app.config.from_object(config_obj)
 
+    from slurdletwo.session import ResilientSessionInterface
+
+    app.session_interface = ResilientSessionInterface()
+
     from werkzeug.middleware.proxy_fix import ProxyFix
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)

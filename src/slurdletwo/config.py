@@ -23,6 +23,7 @@ class Config:
     URL_PREFIX = os.environ.get("URL_PREFIX", "/slurdle")
     APPLICATION_ROOT = os.environ.get("URL_PREFIX", "/slurdle")
     SESSION_COOKIE_PATH = os.environ.get("URL_PREFIX", "/slurdle")
+    SESSION_COOKIE_NAME = "slurdle_session"
     SECRET_KEY = os.environ.get("FLASK_SECRET_KEY") or os.urandom(24)
     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False

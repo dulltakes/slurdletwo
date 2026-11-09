@@ -229,3 +229,51 @@ def test_page_title_matches_slur_and_updates_on_next(live_server_url: str) -> No
         assert page.title() == updated_slur.strip()
 
         browser.close()
+
+
+def test_mobile_target_height_remains_constant_on_wrong_guess(
+    live_server_url: str,
+) -> None:
+    """Ensure that on mobile viewports (e.g. Pixel 9 / 412x924), clicking a target does not expand its height."""
+    chrome_bin = _find_system_chrome()
+    if not chrome_bin:
+        pytest.skip("Chrome binary not available for headless browser layout test")
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        pytest.skip("Playwright not installed in current environment")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(executable_path=chrome_bin, headless=True)
+        page = browser.new_page(viewport={"width": 412, "height": 924})
+        page.goto(live_server_url)
+
+        # Intercept /guess to simulate a wrong answer
+        page.route(
+            "**/guess",
+            lambda route: route.fulfill(
+                status=200,
+                content_type="application/json",
+                body='{"correct": false}',
+            ),
+        )
+
+        first_target = page.locator(".target").first
+        initial_box = first_target.bounding_box()
+        assert initial_box is not None
+
+        # Click the target to trigger wrong answer state
+        first_target.click()
+        page.wait_for_selector(".target.cursor-not-allowed")
+
+        updated_box = first_target.bounding_box()
+        assert updated_box is not None
+
+        # Height before and after must be identical (no layout shift)
+        assert abs(updated_box["height"] - initial_box["height"]) <= 1, (
+            f"Layout shift detected! Height changed from {initial_box['height']}px "
+            f"to {updated_box['height']}px"
+        )
+
+        browser.close()

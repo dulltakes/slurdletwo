@@ -211,3 +211,49 @@ class TestSitemapRoute:
         text = response.data.decode("utf-8")
         assert "https://dulltakes.golf/slurdle/" in text
         assert "<urlset" in text
+
+
+class TestResilientSessionHandling:
+    """Validates resolution of duplicate cookies across paths and root cleanup."""
+
+    def test_resolves_active_round_when_multiple_session_cookies_present(
+        self, app, client
+    ):
+        s = app.session_interface.get_signing_serializer(app)
+        assert s is not None
+        stale_cookie = s.dumps({"empty": True})
+        valid_cookie = s.dumps(
+            {
+                "correct_target": "Australians",
+                "slur": "Aussie",
+                "origin": "origin info",
+            }
+        )
+
+        # Simulate browser cookie jar holding both a legacy root cookie and active subpath cookie
+        client.set_cookie(
+            domain="localhost", key="session", value=stale_cookie, path="/"
+        )
+        client.set_cookie(
+            domain="localhost",
+            key="slurdle_session",
+            value=valid_cookie,
+            path="/slurdle",
+        )
+
+        resp = client.post(
+            "/slurdle/guess",
+            json={"target": "Australians", "slur": "Aussie"},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["correct"] is True
+
+    def test_purges_stale_root_cookies_in_response(self, client):
+        resp = client.get("/slurdle/")
+        set_cookies = resp.headers.getlist("Set-Cookie")
+        # Verify that response instructs browser to delete cookies at Path=/
+        assert any(
+            "session=;" in sc and "Path=/" in sc and "Max-Age=0" in sc
+            for sc in set_cookies
+        )

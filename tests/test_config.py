@@ -64,4 +64,5 @@ class TestConfigPrefix:
 
         assert Config.URL_PREFIX == "/slurdle"
         assert Config.SESSION_COOKIE_PATH == "/slurdle"
+        assert Config.SESSION_COOKIE_NAME == "slurdle_session"
         assert Config.APPLICATION_ROOT == "/slurdle"
